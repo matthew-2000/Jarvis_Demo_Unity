@@ -15649,8 +15649,8 @@ GameObject:
   - component: {fileID: 1519995480}
   - component: {fileID: 1519995479}
   - component: {fileID: 1519995478}
-  - component: {fileID: 1519995481}
   - component: {fileID: 1519995476}
+  - component: {fileID: 1519995481}
   m_Layer: 0
   m_Name: App Voice Experience
   m_TagString: Untagged
@@ -15956,17 +15956,8 @@ MonoBehaviour:
   Voice: {fileID: 1519995478}
   ValidateEarly: 0
   intent: wake_word
-  confidenceThreshold: 0.6
-  valueMatchers:
-  - path: entities.wake_word:wake_word[0].name
-    witValueReference: {fileID: 0}
-    contentRequired: 1
-    matchMethod: 0
-    comparisonMethod: 0
-    matchValue: 
-    floatingPointComparisonTolerance: 0.00009999999747378752
-    allowConfidenceOverlap: 0
-    confidenceRanges: []
+  confidenceThreshold: 0.8
+  valueMatchers: []
   formattedValueEvents: []
   onMultiValueEvent:
     m_PersistentCalls:
@@ -19428,8 +19419,8 @@ MonoBehaviour:
   m_fontSizeMin: 18
   m_fontSizeMax: 72
   m_fontStyle: 0
-  m_HorizontalAlignment: 1
-  m_VerticalAlignment: 256
+  m_HorizontalAlignment: 2
+  m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
   m_wordSpacing: 0
@@ -19482,15 +19473,15 @@ RectTransform:
   m_GameObject: {fileID: 1810995772}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 1}
-  m_LocalScale: {x: 0.01, y: 0.01, z: 0.01}
+  m_LocalScale: {x: 0.002, y: 0.002, z: 0.002}
   m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 1309139861}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 0.5}
-  m_SizeDelta: {x: 200, y: 50}
+  m_AnchoredPosition: {x: 0, y: 1}
+  m_SizeDelta: {x: 400, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &1812206148
 GameObject:

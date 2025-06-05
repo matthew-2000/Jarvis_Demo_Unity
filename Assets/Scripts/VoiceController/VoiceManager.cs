@@ -16,7 +16,7 @@ public class VoiceManager : MonoBehaviour
     [SerializeField] private UnityEvent wakeWordDetected;
     [SerializeField] private UnityEvent<string> completeTranscription;
 
-    private bool _voiceCommandReady;
+    private bool _voiceCommandReady = false;
 
     private void Awake()
     {
@@ -25,13 +25,9 @@ public class VoiceManager : MonoBehaviour
         appVoiceExperience.VoiceEvents.OnFullTranscription.AddListener(OnFullTranscription);
 
         var eventField = typeof(WitResponseMatcher).GetField("onMultiValueEvent", BindingFlags.NonPublic | BindingFlags.Instance);
-        if (eventField != null)
+        if (eventField != null && eventField.GetValue(responseMatcher) is MultiValueEvent onMultiValueEvent)
         {
-            var onMultiValueEvent = eventField.GetValue(responseMatcher) as MultiValueEvent;
-            if (onMultiValueEvent != null)
-            {
-                onMultiValueEvent.AddListener(WakeWordDetected);
-            }
+            onMultiValueEvent.AddListener(WakeWordDetected);
         }
 
         appVoiceExperience.Activate();
@@ -44,39 +40,39 @@ public class VoiceManager : MonoBehaviour
         appVoiceExperience.VoiceEvents.OnFullTranscription.RemoveListener(OnFullTranscription);
 
         var eventField = typeof(WitResponseMatcher).GetField("onMultiValueEvent", BindingFlags.NonPublic | BindingFlags.Instance);
-        if (eventField != null)
+        if (eventField != null && eventField.GetValue(responseMatcher) is MultiValueEvent onMultiValueEvent)
         {
-            var onMultiValueEvent = eventField.GetValue(responseMatcher) as MultiValueEvent;
-            if (onMultiValueEvent != null)
-            {
-                onMultiValueEvent.RemoveListener(WakeWordDetected);
-            }
+            onMultiValueEvent.RemoveListener(WakeWordDetected);
         }
+
     }
 
     private void ReactivateVoice() => appVoiceExperience.Activate();
 
     private void WakeWordDetected(string[] arg0)
     {
+        Debug.Log("[VoiceManager] Wake word detected: " + string.Join(", ", arg0));
         _voiceCommandReady = true;
+        Debug.Log($"[VoiceManager] Voice command ready: {_voiceCommandReady}");
         wakeWordDetected?.Invoke();
     }
 
     private void OnPartialTranscription(string transcription)
     {
-        if (_voiceCommandReady)
-        {
-            transcriptionText.text = transcription;
-        }
+        if (!_voiceCommandReady) return;
+        Debug.Log($"[VoiceManager] Partial transcription: {transcription}");
+        Debug.Log($"[VoiceManager] Voice command ready: {_voiceCommandReady}");
+        transcriptionText.text = transcription;
     }
 
     private void OnFullTranscription(string transcription)
     {
-        if (_voiceCommandReady)
-        {
-            completeTranscription?.Invoke(transcription);
-            _voiceCommandReady = false; // Reset after full transcription
-        }
+        if (!_voiceCommandReady) return;
+        Debug.Log($"[VoiceManager] Full transcription: {transcription}");
+        Debug.Log($"[VoiceManager] Voice command ready: {_voiceCommandReady}");
+        _voiceCommandReady = false;
+        Debug.Log($"[VoiceManager] Voice command ready (should be false): {_voiceCommandReady}");
+        completeTranscription?.Invoke(transcription);
     }
-    
+
 }

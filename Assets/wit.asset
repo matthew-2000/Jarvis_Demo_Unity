@@ -35,32 +35,29 @@ MonoBehaviour:
     isPrivate: 1
     createdAt: 2025-06-04T03:48:47-0700
     trainingStatus: 1
-    lastTrainDuration: 55
-    lastTrainedAt: 2025-06-04T05:48:23-0700
-    nextTrainAt: 2025-06-04T05:47:28-0700
+    lastTrainDuration: 23
+    lastTrainedAt: 2025-06-04T08:03:04-0700
+    nextTrainAt: 2025-06-04T08:02:41-0700
     intents:
-    - id: 1269217294565748
+    - id: 1462021325157420
       name: wake_word
       entities:
       - name: wake_word:wake_word
-        id: 1957582924984928
+        id: 1392637188642136
     entities:
     - name: wake_word
-      id: 1936944497047153
+      id: 995497222606499
       lookups:
       - free-text
       - keywords
       roles:
       - name: wake_word
-        id: 1957582924984928
+        id: 1392637188642136
       keywords:
-      - keyword: ey giarvis
+      - keyword: ciao pippo
         synonyms:
-        - ey giarvis
-      - keyword: hey jarvis
-        synonyms:
-        - ey jarvis
-        - hey jarvis
+        - ciao pipp
+        - ciao pippo
     traits: []
     versionTags: []
     voices:
