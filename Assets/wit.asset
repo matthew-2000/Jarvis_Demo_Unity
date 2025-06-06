@@ -35,8 +35,8 @@ MonoBehaviour:
     isPrivate: 1
     createdAt: 2025-06-04T03:48:47-0700
     trainingStatus: 1
-    lastTrainDuration: 23
-    lastTrainedAt: 2025-06-04T08:03:04-0700
+    lastTrainDuration: 83
+    lastTrainedAt: 2025-06-04T08:04:04-0700
     nextTrainAt: 2025-06-04T08:02:41-0700
     intents:
     - id: 1462021325157420
