@@ -1,13 +1,9 @@
 using UnityEngine;
-using UnityEngine.UI;
 using UnityEngine.Android;
 
 public class AudioRecorder : MonoBehaviour
 {
     public AudioSource audioSource;
-    public Button recordButton;
-    public Button stopButton;
-    public Button playButton;
 
     private AudioClip recordedClip;
     private string micDevice;
@@ -31,23 +27,20 @@ public class AudioRecorder : MonoBehaviour
         {
             Debug.LogError("Nessun microfono trovato!");
         }
-
-        // Collega i pulsanti
-        recordButton.onClick.AddListener(StartRecording);
-        stopButton.onClick.AddListener(StopRecording);
-        playButton.onClick.AddListener(PlayRecording);
     }
 
+    // Funzione per avviare la registrazione, può essere chiamata da qualsiasi altro evento
     public void StartRecording()
     {
         if (!isRecording && micDevice != null)
         {
             Debug.Log("Inizio registrazione...");
-            recordedClip = Microphone.Start(micDevice, false, 10, 44100);
+            recordedClip = Microphone.Start(micDevice, false, 10, 44100); // durata 10 secondi, frequenza di campionamento 44100 Hz
             isRecording = true;
         }
     }
 
+    // Funzione per fermare la registrazione
     public void StopRecording()
     {
         if (isRecording)
@@ -55,9 +48,12 @@ public class AudioRecorder : MonoBehaviour
             Microphone.End(micDevice);
             Debug.Log("Registrazione terminata.");
             isRecording = false;
+            PlayRecording(); // Riproduce la registrazione appena terminata
+            Debug.Log("Registrazione salvata: " + recordedClip.name);
         }
     }
 
+    // Funzione per riprodurre la registrazione
     public void PlayRecording()
     {
         if (recordedClip != null)
@@ -67,4 +63,5 @@ public class AudioRecorder : MonoBehaviour
             audioSource.Play();
         }
     }
+
 }
