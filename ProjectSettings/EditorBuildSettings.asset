@@ -6,6 +6,9 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
+    path: Assets/Scenes/TTSScene.unity
+    guid: 26416e8f1d7f642dcb124b56d2120f86
+  - enabled: 1
     path: Assets/Scenes/MainScene.unity
     guid: 16815bca5572d4346b95d60a5c2c5815
   - enabled: 1
@@ -20,9 +23,6 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/VoiceControllerScene.unity
     guid: 87de81e76ead84833997253396b62387
-  - enabled: 1
-    path: Assets/Scenes/TTSScene.unity
-    guid: 26416e8f1d7f642dcb124b56d2120f86
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
     com.unity.xr.management.loader_settings: {fileID: 11400000, guid: dbc256c73f8a04af899d56f0cf26c424, type: 2}
