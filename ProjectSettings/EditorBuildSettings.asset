@@ -6,11 +6,11 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/Scenes/TTSScene.unity
-    guid: 26416e8f1d7f642dcb124b56d2120f86
-  - enabled: 1
     path: Assets/Scenes/MainScene.unity
     guid: 16815bca5572d4346b95d60a5c2c5815
+  - enabled: 1
+    path: Assets/Scenes/TTSScene.unity
+    guid: 26416e8f1d7f642dcb124b56d2120f86
   - enabled: 1
     path: Assets/Scenes/AudioRegisterScene.unity
     guid: fb97871c521ab4308ac74c12c49b870b
