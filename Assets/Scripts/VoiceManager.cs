@@ -17,6 +17,9 @@ public class VoiceManager : MonoBehaviour
     [SerializeField] private UnityEvent<string> completeTranscription;
     [SerializeField] private UnityEvent<string> partialTranscription;
 
+    [Header("Async Request Handler")]
+    [SerializeField] private AsyncRequestHandler asyncRequestHandler;
+
     private bool isListening = false;
 
     private List<byte> recordedAudioData = new List<byte>();
@@ -101,6 +104,9 @@ public class VoiceManager : MonoBehaviour
         transcriptionText.text = transcription;
         completeTranscription?.Invoke(transcription);
 
+        // Invia il testo rilevato
+        StartCoroutine(asyncRequestHandler.SendTextAsync(transcription));
+
         isListening = false;
     }
 
@@ -115,6 +121,10 @@ public class VoiceManager : MonoBehaviour
 
         SaveRecordedAudioToFile(fullPath);
         Debug.Log($"[VoiceManager] Audio salvato in: {fullPath}");
+
+        // Invia l'audio registrato
+        byte[] wavData = ConvertPCMToWAV(recordedAudioData.ToArray(), 1, 16000); // mono, 16kHz
+        StartCoroutine(asyncRequestHandler.SendAudioAsync(wavData, filename));
     }
 
     private void OnByteDataReady(byte[] data, int offset, int length)
