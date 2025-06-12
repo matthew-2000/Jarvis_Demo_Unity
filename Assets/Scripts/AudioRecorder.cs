@@ -1,67 +1,51 @@
 using UnityEngine;
-using UnityEngine.Android;
+using UnityEngine.Events;
 
 public class AudioRecorder : MonoBehaviour
 {
+    [Header("Dependencies")]
+    public VoiceManager voiceManager;
     public AudioSource audioSource;
 
-    private AudioClip recordedClip;
-    private string micDevice;
-    private bool isRecording = false;
+    [Header("Recording Events")]
+    public UnityEvent OnStartRecordingEvent;
+    public UnityEvent OnStopRecordingEvent;
+    public UnityEvent OnPlayRecordingEvent;
 
-    void Start()
+    private void Start()
     {
-        // Richiesta permesso microfono
-        if (!Permission.HasUserAuthorizedPermission(Permission.Microphone))
-        {
-            Permission.RequestUserPermission(Permission.Microphone);
-        }
+        // Collega gli eventi UnityEvent ai metodi interni
+        OnStartRecordingEvent.AddListener(StartRecording);
+        OnStopRecordingEvent.AddListener(StopRecording);
+        OnPlayRecordingEvent.AddListener(PlayRecording);
+    }
 
-        // Trova primo microfono disponibile
-        if (Microphone.devices.Length > 0)
+    public void StartRecording()
+    {
+        Debug.Log("[AudioRecorder] StartRecording invoked");
+        voiceManager.StartListening();
+    }
+
+    public void StopRecording()
+    {
+        Debug.Log("[AudioRecorder] StopRecording invoked");
+        voiceManager.StopListening();
+    }
+
+    public void PlayRecording()
+    {
+        Debug.Log("[AudioRecorder] PlayRecording invoked");
+
+        AudioClip clip = voiceManager.GetRecordedAudioClip();
+        if (clip != null)
         {
-            micDevice = Microphone.devices[0];
-            Debug.Log("Microfono trovato: " + micDevice);
+            audioSource.clip = clip;
+            audioSource.Play();
+            Debug.Log("[AudioRecorder] Playing recorded audio");
         }
         else
         {
-            Debug.LogError("Nessun microfono trovato!");
+            Debug.LogWarning("[AudioRecorder] No recorded audio available to play");
         }
     }
-
-    // Funzione per avviare la registrazione, può essere chiamata da qualsiasi altro evento
-    public void StartRecording()
-    {
-        if (!isRecording && micDevice != null)
-        {
-            Debug.Log("Inizio registrazione...");
-            recordedClip = Microphone.Start(micDevice, false, 10, 44100); // durata 10 secondi, frequenza di campionamento 44100 Hz
-            isRecording = true;
-        }
-    }
-
-    // Funzione per fermare la registrazione
-    public void StopRecording()
-    {
-        if (isRecording)
-        {
-            Microphone.End(micDevice);
-            Debug.Log("Registrazione terminata.");
-            isRecording = false;
-            PlayRecording(); // Riproduce la registrazione appena terminata
-            Debug.Log("Registrazione salvata: " + recordedClip.name);
-        }
-    }
-
-    // Funzione per riprodurre la registrazione
-    public void PlayRecording()
-    {
-        if (recordedClip != null)
-        {
-            Debug.Log("Riproduzione...");
-            audioSource.clip = recordedClip;
-            audioSource.Play();
-        }
-    }
-
 }
