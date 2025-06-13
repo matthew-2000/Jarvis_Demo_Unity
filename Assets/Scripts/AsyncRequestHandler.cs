@@ -3,11 +3,14 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.Events;
+using System.Text;
 
 public class AsyncRequestHandler : MonoBehaviour
 {
     [Header("Endpoint Configuration")]
-    [SerializeField] private string baseUrl = "https://example.com/api";
+    [SerializeField] private string baseUrl = "http://127.0.0.1:5001";
+    [SerializeField] private string userID  = "unity_client";
+
     private Dictionary<string, string> endpoints;
 
     [Header("Response Events")]
@@ -16,55 +19,83 @@ public class AsyncRequestHandler : MonoBehaviour
 
     private void Awake()
     {
-        // Configurazione centralizzata degli endpoint
         endpoints = new Dictionary<string, string>
         {
-            { "text", $"{baseUrl}/text" },
-            { "audio", $"{baseUrl}/audio" }
+            { "audio", $"{baseUrl}/upload_audio" },
+            { "chat",  $"{baseUrl}/chat_message" },
+            { "reset", $"{baseUrl}/reset_conversation" }
         };
     }
 
-    public IEnumerator SendTextAsync(string text)
+    /*────────────────────────── AUDIO ──────────────────────────*/
+    public IEnumerator SendAudioAsync(byte[] audioData, string fileName = "clip.wav")
     {
-        Debug.Log($"[AsyncRequestHandler] Sending text: {text}");
+        Debug.Log($"[AsyncRequestHandler] Uploading audio ({audioData.Length} bytes)");
+
         WWWForm form = new WWWForm();
-        form.AddField("text", text);
+        form.AddBinaryData("audio", audioData, fileName, "audio/wav");
+        form.AddField("user_id", userID);
 
-        using (UnityWebRequest request = UnityWebRequest.Post(endpoints["text"], form))
+        using (UnityWebRequest req = UnityWebRequest.Post(endpoints["audio"], form))
         {
-            yield return request.SendWebRequest();
+            yield return req.SendWebRequest();
 
-            if (request.result == UnityWebRequest.Result.Success)
+            if (req.result == UnityWebRequest.Result.Success)
             {
-                Debug.Log($"[AsyncRequestHandler] Text sent successfully: {request.downloadHandler.text}");
-                OnTextResponseReceived?.Invoke(request.downloadHandler.text); // Invoca l'evento
+                Debug.Log($"[AsyncRequestHandler] Audio upload OK → {req.downloadHandler.text}");
+                OnAudioResponseReceived?.Invoke(req.downloadHandler.text);
             }
             else
             {
-                Debug.LogError($"[AsyncRequestHandler] Failed to send text: {request.error}");
+                Debug.LogError($"[AsyncRequestHandler] Audio upload FAIL: {req.error}");
             }
         }
     }
 
-    public IEnumerator SendAudioAsync(byte[] audioData, string fileName)
+    /*────────────────────────── TEXT ───────────────────────────*/
+    public IEnumerator SendTextAsync(string text)
     {
-        Debug.Log($"[AsyncRequestHandler] Sending audio file: {fileName}");
-        WWWForm form = new WWWForm();
-        form.AddBinaryData("audio", audioData, fileName, "audio/wav");
+        Debug.Log($"[AsyncRequestHandler] Sending text: {text}");
 
-        using (UnityWebRequest request = UnityWebRequest.Post(endpoints["audio"], form))
+        // Escape eventuali doppi apici / backslash
+        string safe = text.Replace("\\", "\\\\").Replace("\"", "\\\"");
+        string json = $"{{\"user_id\":\"{userID}\",\"text\":\"{safe}\"}}";
+        Debug.Log($"[AsyncRequestHandler] JSON payload: {json}"); // Log JSON payload
+        byte[] body = System.Text.Encoding.UTF8.GetBytes(json);
+
+        using (UnityWebRequest req = new UnityWebRequest(endpoints["chat"], "POST"))
         {
-            yield return request.SendWebRequest();
+            req.uploadHandler   = new UploadHandlerRaw(body);
+            req.downloadHandler = new DownloadHandlerBuffer();
+            req.SetRequestHeader("Content-Type", "application/json");
 
-            if (request.result == UnityWebRequest.Result.Success)
+            yield return req.SendWebRequest();
+
+            if (req.result == UnityWebRequest.Result.Success)
             {
-                Debug.Log($"[AsyncRequestHandler] Audio sent successfully: {request.downloadHandler.text}");
-                OnAudioResponseReceived?.Invoke(request.downloadHandler.text); // Invoca l'evento
+                Debug.Log($"[AsyncRequestHandler] Chat OK → {req.downloadHandler.text}");
+                OnTextResponseReceived?.Invoke(req.downloadHandler.text);
             }
             else
             {
-                Debug.LogError($"[AsyncRequestHandler] Failed to send audio: {request.error}");
+                Debug.LogError($"[AsyncRequestHandler] Chat FAIL: {req.error}");
             }
+        }
+    }
+
+    /*────────────────────────── RESET ──────────────────────────*/
+    public IEnumerator ResetConversation()
+    {
+        WWWForm form = new WWWForm();
+        form.AddField("user_id", userID);
+
+        using (UnityWebRequest req = UnityWebRequest.Post(endpoints["reset"], form))
+        {
+            yield return req.SendWebRequest();
+            if (req.result == UnityWebRequest.Result.Success)
+                Debug.Log("[AsyncRequestHandler] Conversation reset on server.");
+            else
+                Debug.LogError($"[AsyncRequestHandler] Reset FAIL: {req.error}");
         }
     }
 }

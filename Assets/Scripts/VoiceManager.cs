@@ -1,34 +1,40 @@
+using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
 using UnityEngine.Events;
 using TMPro;
 using Oculus.Voice;
 using Meta.WitAi;
 using Meta.WitAi.Data;
-using System.Collections.Generic;
-using System.IO;
 
 public class VoiceManager : MonoBehaviour
 {
+    /*───────────────────────── Inspector ─────────────────────────*/
     [Header("Wit Configuration")]
-    [SerializeField] private AppVoiceExperience appVoiceExperience;
+    [SerializeField] private AppVoiceExperience appVoice;
+
     [SerializeField] private TextMeshPro transcriptionText;
 
-    [Header("Events")]
-    [SerializeField] private UnityEvent<string> completeTranscription;
-    [SerializeField] private UnityEvent<string> partialTranscription;
+    [Header("Events (optional)")]
+    [SerializeField] private UnityEvent<string> onCompleteTranscription;
+    [SerializeField] private UnityEvent<string> onPartialTranscription;
 
-    [Header("Async Request Handler")]
+    [Header("Networking")]
     [SerializeField] private AsyncRequestHandler asyncRequestHandler;
 
-    private bool isListening = false;
+    /*───────────────────────── Internals ─────────────────────────*/
+    private bool isListening = false;   // session flag
+    private bool requestInProgress = false;   // evita overlap Wit
+    private readonly List<byte> pcmBuffer = new List<byte>(); // byte 16-bit mono 16 kHz
+    private readonly List<string> transcriptionBuffer = new List<string>(); // accumula trascrizioni
 
-    private List<byte> recordedAudioData = new List<byte>();
-
+    /*───────────────────────── Unity life-cycle ─────────────────*/
     private void Awake()
     {
-        appVoiceExperience.VoiceEvents.OnPartialTranscription.AddListener(OnPartialTranscription);
-        appVoiceExperience.VoiceEvents.OnFullTranscription.AddListener(OnFullTranscription);
-        appVoiceExperience.VoiceEvents.OnRequestCompleted.AddListener(OnRequestCompleted);
+        var ve = appVoice.VoiceEvents;
+        ve.OnPartialTranscription.AddListener(OnPartialTranscription);
+        ve.OnFullTranscription.AddListener(OnFullTranscription);
+        ve.OnRequestCompleted.AddListener(OnRequestCompleted);
 
         if (AudioBuffer.Instance != null)
         {
@@ -36,154 +42,147 @@ public class VoiceManager : MonoBehaviour
             Debug.Log("[VoiceManager] Subscribed to OnByteDataReady.");
         }
         else
-        {
             Debug.LogError("[VoiceManager] AudioBuffer.Instance is null!");
-        }
     }
 
     private void OnDestroy()
     {
-        appVoiceExperience.VoiceEvents.OnPartialTranscription.RemoveListener(OnPartialTranscription);
-        appVoiceExperience.VoiceEvents.OnFullTranscription.RemoveListener(OnFullTranscription);
-        appVoiceExperience.VoiceEvents.OnRequestCompleted.RemoveListener(OnRequestCompleted);
+        var ve = appVoice.VoiceEvents;
+        ve.OnPartialTranscription.RemoveListener(OnPartialTranscription);
+        ve.OnFullTranscription.RemoveListener(OnFullTranscription);
+        ve.OnRequestCompleted.RemoveListener(OnRequestCompleted);
 
         if (AudioBuffer.Instance != null)
-        {
             AudioBuffer.Instance.Events.OnByteDataReady.RemoveListener(OnByteDataReady);
-            Debug.Log("[VoiceManager] Unsubscribed from OnByteDataReady.");
-        }
     }
 
+    /*───────────────────────── Public API ───────────────────────*/
     public void StartListening()
     {
-        if (!isListening)
-        {
-            Debug.Log("[VoiceManager] Start Listening");
+        if (isListening || requestInProgress) return;
 
-            recordedAudioData.Clear(); // Pulizia buffer audio
-
-            isListening = true;
-            appVoiceExperience.Activate();
-        }
+        Debug.Log("[VoiceManager] StartListening");
+        pcmBuffer.Clear();
+        transcriptionBuffer.Clear(); // reset trascrizioni
+        isListening = true;
+        requestInProgress = true;
+        appVoice.Activate();
     }
 
     public void StopListening()
     {
-        if (isListening)
+        if (!isListening) return;
+
+        Debug.Log("[VoiceManager] StopListening");
+        isListening = false;
+        appVoice.Deactivate();
+
+        // Usa il testo parziale come fallback se il buffer è vuoto
+        string fullTranscription = transcriptionBuffer.Count > 0
+            ? string.Join(" ", transcriptionBuffer)
+            : transcriptionText.text;
+
+        Debug.Log($"[VoiceManager] Final transcription: {fullTranscription}");
+        StartCoroutine(asyncRequestHandler.SendTextAsync(fullTranscription));
+
+        // Converti buffer audio in WAV e invia
+        if (pcmBuffer.Count > 0)
         {
-            Debug.Log("[VoiceManager] Stop Listening");
-            isListening = false;
-            appVoiceExperience.Deactivate();
+            byte[] wav = ConvertPCMToWAV(pcmBuffer.ToArray(), 1, 16_000);
+            string fname = $"wit_{System.DateTime.Now:yyyyMMdd_HHmmss}.wav";
+            StartCoroutine(asyncRequestHandler.SendAudioAsync(wav, fname));
         }
+
+        pcmBuffer.Clear();    // reset per la prossima sessione
+        transcriptionBuffer.Clear(); // reset trascrizioni
     }
 
     public void CancelListening()
     {
-        if (isListening)
-        {
-            Debug.Log("[VoiceManager] Cancel Listening");
-            isListening = false;
-            appVoiceExperience.DeactivateAndAbortRequest();
-        }
-    }
-
-    private void OnPartialTranscription(string transcription)
-    {
         if (!isListening) return;
 
-        Debug.Log($"[VoiceManager] Partial transcription: {transcription}");
-        transcriptionText.text = transcription;
-        partialTranscription?.Invoke(transcription);
-    }
-
-    private void OnFullTranscription(string transcription)
-    {
-        if (!isListening) return;
-
-        Debug.Log($"[VoiceManager] Full transcription: {transcription}");
-        transcriptionText.text = transcription;
-        completeTranscription?.Invoke(transcription);
-
-        // Invia il testo rilevato
-        StartCoroutine(asyncRequestHandler.SendTextAsync(transcription));
-
+        Debug.Log("[VoiceManager] CancelListening");
         isListening = false;
+        appVoice.DeactivateAndAbortRequest();
+        pcmBuffer.Clear();
+    }
+
+    /*───────────────────────── Wit callbacks ────────────────────*/
+    private void OnPartialTranscription(string text)
+    {
+        if (!isListening) return;
+
+        Debug.Log($"[VoiceManager] … {text}");
+        transcriptionText.text = text;
+        onPartialTranscription?.Invoke(text);
+    }
+
+    private void OnFullTranscription(string text)
+    {
+        if (!isListening) return;   // safety
+
+        Debug.Log($"[VoiceManager] Full transcription received: {text}");
+        transcriptionBuffer.Add(text); // Accumula trascrizione
+        onCompleteTranscription?.Invoke(text);
     }
 
     private void OnRequestCompleted()
     {
-        Debug.Log("[VoiceManager] Request completed");
-        isListening = false;
-
-        // Salvataggio automatico
-        string filename = $"wit_recording_{System.DateTime.Now:yyyyMMdd_HHmmss}.wav";
-        string fullPath = Path.Combine(Application.persistentDataPath, filename);
-
-        SaveRecordedAudioToFile(fullPath);
-        Debug.Log($"[VoiceManager] Audio salvato in: {fullPath}");
-
-        // Invia l'audio registrato
-        byte[] wavData = ConvertPCMToWAV(recordedAudioData.ToArray(), 1, 16000); // mono, 16kHz
-        StartCoroutine(asyncRequestHandler.SendAudioAsync(wavData, filename));
+        requestInProgress = false;
+        Debug.Log("[VoiceManager] RequestCompleted (Wit finished)");
     }
 
     private void OnByteDataReady(byte[] data, int offset, int length)
     {
-        // Qui ricevi i byte PCM dal microfono
+        if (!isListening && !requestInProgress) return;   // accoda solo in sessione
         for (int i = offset; i < offset + length; i++)
-        {
-            recordedAudioData.Add(data[i]);
-        }
+            pcmBuffer.Add(data[i]);
     }
 
-    public void SaveRecordedAudioToFile(string path)
+    /*───────────────────────── Utility WAV ─────────────────────*/
+    public static byte[] ConvertPCMToWAV(byte[] pcm, int channels, int sampleRate)
     {
-        Debug.Log($"[VoiceManager] Salvo audio registrato in {path}");
+        using var m = new MemoryStream();
+        using var w = new BinaryWriter(m);
+        int byteRate = sampleRate * channels * 2;
 
-        byte[] wavData = ConvertPCMToWAV(recordedAudioData.ToArray(), 1, 16000); // mono, 16kHz
-        File.WriteAllBytes(path, wavData);
-
-        Debug.Log("[VoiceManager] Audio salvato.");
+        w.Write(System.Text.Encoding.ASCII.GetBytes("RIFF"));
+        w.Write(36 + pcm.Length);
+        w.Write(System.Text.Encoding.ASCII.GetBytes("WAVEfmt "));
+        w.Write(16);               // PCM header length
+        w.Write((short)1);         // PCM
+        w.Write((short)channels);
+        w.Write(sampleRate);
+        w.Write(byteRate);
+        w.Write((short)(channels * 2));
+        w.Write((short)16);        // bits per sample
+        w.Write(System.Text.Encoding.ASCII.GetBytes("data"));
+        w.Write(pcm.Length);
+        w.Write(pcm);
+        w.Flush();
+        return m.ToArray();
     }
-
-    public static byte[] ConvertPCMToWAV(byte[] pcmData, int channels, int sampleRate)
-    {
-        MemoryStream stream = new MemoryStream();
-        BinaryWriter writer = new BinaryWriter(stream);
-
-        int byteRate = sampleRate * channels * 2; // 16 bit
-
-        // WAV header
-        writer.Write(System.Text.Encoding.UTF8.GetBytes("RIFF"));
-        writer.Write(36 + pcmData.Length);
-        writer.Write(System.Text.Encoding.UTF8.GetBytes("WAVE"));
-        writer.Write(System.Text.Encoding.UTF8.GetBytes("fmt "));
-        writer.Write(16);
-        writer.Write((short)1); // PCM
-        writer.Write((short)channels);
-        writer.Write(sampleRate);
-        writer.Write(byteRate);
-        writer.Write((short)(channels * 2)); // block align
-        writer.Write((short)16); // bits per sample
-
-        writer.Write(System.Text.Encoding.UTF8.GetBytes("data"));
-        writer.Write(pcmData.Length);
-        writer.Write(pcmData);
-
-        writer.Flush();
-        return stream.ToArray();
-    }
-
+    
+    /*───────────────────────── Utility: AudioClip ──────────────────*/
     public AudioClip GetRecordedAudioClip()
     {
-        float[] samples = new float[recordedAudioData.Count / 2]; // 16 bit = 2 byte per sample
-        for (int i = 0; i < samples.Length; i++)
+        // Chiama questo metodo dopo che la richiesta è completa
+        // (o in StopListening) quando pcmBuffer contiene l’intero utterance.
+        int sampleCount = pcmBuffer.Count / 2;          // 16-bit ⇒ 2 byte per sample
+        float[] samples = new float[sampleCount];
+
+        for (int i = 0; i < sampleCount; i++)
         {
-            short sample = (short)(recordedAudioData[i * 2] | (recordedAudioData[i * 2 + 1] << 8));
-            samples[i] = sample / 32768.0f;
+            short sample16 = (short)(pcmBuffer[i * 2] |
+                                    (pcmBuffer[i * 2 + 1] << 8));
+            samples[i] = sample16 / 32768f;             // normalizza in [-1,1]
         }
 
-        AudioClip clip = AudioClip.Create("WitRecording", samples.Length, 1, 16000, false);
+        var clip = AudioClip.Create("WitClip",
+                                    sampleCount,
+                                    1,          // mono
+                                    16_000,
+                                    false);
         clip.SetData(samples, 0);
         return clip;
     }
