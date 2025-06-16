@@ -6,6 +6,9 @@ using TMPro;
 using Oculus.Voice;
 using Meta.WitAi;
 using Meta.WitAi.Data;
+using System.Globalization;
+using System.Text;
+using System.Text.RegularExpressions;
 
 public class VoiceManager : MonoBehaviour
 {
@@ -26,17 +29,41 @@ public class VoiceManager : MonoBehaviour
 
     [Header("JARVIS Orb UI")]
     [SerializeField] private AgentUIController uiOrb;
+    [SerializeField] private AgentMover agentMover;
 
     /*───────────────────────── Internals ─────────────────────────*/
-    private bool                isListening       = false;
+    private bool isListening = false;
     private bool                requestInProgress = false;
     private readonly List<byte> pcmBuffer           = new();
     private readonly List<string> transcriptionBuffer = new();
 
     /*────── Parole-chiave (“intents” locali) ─────*/
-    private static readonly string[] ACTIVATE = { "ehi agente", "ciao agente", "hey agente" };
-    private static readonly string[] REPEAT   = { "ripeti", "di nuovo", "ripetilo" };
-    private static readonly string[] STOP     = { "basta", "stop", "ferma", "zitto", "silenzio" };
+    private static readonly string[] ACTIVATE = {
+        // forme colloquiali
+        "ehi agente", "hey agente", "ciao agente",
+        // chiamate “one-word”
+        "agente", "jarvis", "assistente",
+        // varianti con “ok/hey”
+        "ok agente",  "hey jarvis", "ok jarvis"
+    };
+
+    private static readonly string[] REPEAT = {
+        "ripeti", "ripetilo", "puoi ripetere",
+        "ripeti per favore", "ancora", "di nuovo",
+        "non ho capito", "me lo ripeti"
+    };
+
+    private static readonly string[] STOP = {
+        "basta", "stop", "ferma", "zitto",
+        "silenzio", "interrompi", "annulla",
+        "basta così", "fermati"
+    };
+
+    private static readonly string[] MOVE_HERE = {
+        "vieni qui", "avvicinati", "qui davanti",
+        "vieni davanti a me", "spostati qui",
+        "vienimi vicino", "qui vicino"
+    };
 
     /*───────────────────────── Unity life-cycle ─────────────────*/
     private void Awake()
@@ -48,12 +75,12 @@ public class VoiceManager : MonoBehaviour
 
         var ve = appVoice.VoiceEvents;
         ve.OnPartialTranscription.AddListener(OnPartialTranscription);
-        ve.OnFullTranscription   .AddListener(OnFullTranscription);
-        ve.OnRequestCompleted    .AddListener(OnRequestCompleted);
+        ve.OnFullTranscription.AddListener(OnFullTranscription);
+        ve.OnRequestCompleted.AddListener(OnRequestCompleted);
 
-        ve.OnStoppedListening                 .AddListener(StopListening);
-        ve.OnStoppedListeningDueToInactivity  .AddListener(StopListening);
-        ve.OnStoppedListeningDueToTimeout     .AddListener(StopListening);
+        ve.OnStoppedListening.AddListener(StopListening);
+        ve.OnStoppedListeningDueToInactivity.AddListener(StopListening);
+        ve.OnStoppedListeningDueToTimeout.AddListener(StopListening);
 
         if (AudioBuffer.Instance != null)
             AudioBuffer.Instance.Events.OnByteDataReady.AddListener(OnByteDataReady);
@@ -115,6 +142,13 @@ public class VoiceManager : MonoBehaviour
         if (ContainsAny(lower, ACTIVATE))
         {                                         ResetTextBuffers(); return; }
 
+        if (ContainsAny(lower, MOVE_HERE))
+        {
+            agentMover?.MoveInFrontOfUser();   
+            ResetTextBuffers();
+            return;
+        }
+
         if (!string.IsNullOrWhiteSpace(full))
             StartCoroutine(asyncRequestHandler.SendTextAsync(full));
 
@@ -171,10 +205,31 @@ public class VoiceManager : MonoBehaviour
     }
 
     /*───────────────────────── Helpers ──────────────────────────*/
-    private static bool ContainsAny(string src, string[] keys)
+    private static string Normalize(string s)
     {
-        foreach (string k in keys)
-            if (src.Contains(k)) return true;
+        s = s.ToLowerInvariant();
+
+        // 1. rimuovi diacritici (è-é-ò …)
+        string formD = s.Normalize(NormalizationForm.FormD);
+        var sb = new StringBuilder(formD.Length);
+        foreach (char c in formD)
+            if (CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark)
+                sb.Append(c);
+        s = sb.ToString().Normalize(NormalizationForm.FormC);
+
+        // 2. spazi & punteggiatura
+        s = Regex.Replace(s, @"[^\w\s]", " ");   // rimuove punt. lasciando spazi
+        s = Regex.Replace(s, @"\s{2,}", " ").Trim();
+        return s;
+    }
+
+    /* versione migliorata di ContainsAny */
+    private static bool ContainsAny(string raw, string[] dict)
+    {
+        string src = Normalize(raw);
+        foreach (string k in dict)
+            if (src.Contains(Normalize(k)))
+                return true;
         return false;
     }
 

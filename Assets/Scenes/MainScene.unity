@@ -11609,6 +11609,7 @@ MonoBehaviour:
   asyncRequestHandler: {fileID: 920403879}
   responseHandler: {fileID: 710700337}
   uiOrb: {fileID: 1441615570}
+  agentMover: {fileID: 1652273535}
 --- !u!4 &826496470
 Transform:
   m_ObjectHideFlags: 0
@@ -24160,6 +24161,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1652273533}
   - component: {fileID: 1652273534}
+  - component: {fileID: 1652273535}
   m_Layer: 0
   m_Name: JARVIS
   m_TagString: Untagged
@@ -24214,6 +24216,27 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
+--- !u!114 &1652273535
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1652273532}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3796b25b3fff842d68a3470711be58f9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  userHead: {fileID: 1220610141}
+  forwardDistance: 0.5
+  heightOffset: -0.2
+  moveDuration: 0.8
+  faceUser: 1
+  yawOffset: 180
+  speakOnMove: 1
+  arrivalSentence: Arrivo!
+  speaker: {fileID: 931881157}
 --- !u!1 &1653070733
 GameObject:
   m_ObjectHideFlags: 0
