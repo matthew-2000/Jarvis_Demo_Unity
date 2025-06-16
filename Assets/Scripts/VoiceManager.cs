@@ -12,8 +12,7 @@ public class VoiceManager : MonoBehaviour
     /*───────────────────────── Inspector ─────────────────────────*/
     [Header("Wit Configuration")]
     [SerializeField] private AppVoiceExperience appVoice;
-
-    [SerializeField] private TextMeshPro transcriptionText;
+    [SerializeField] private TextMeshPro        transcriptionText;
 
     [Header("Events (optional)")]
     [SerializeField] private UnityEvent<string> onCompleteTranscription;
@@ -22,25 +21,40 @@ public class VoiceManager : MonoBehaviour
     [Header("Networking")]
     [SerializeField] private AsyncRequestHandler asyncRequestHandler;
 
+    [Header("Responses / TTS")]
+    [SerializeField] private ResponseHandler responseHandler;
+
+    [Header("JARVIS Orb UI")]
+    [SerializeField] private AgentUIController uiOrb;
+
     /*───────────────────────── Internals ─────────────────────────*/
-    private bool isListening = false;   // session flag
-    private bool requestInProgress = false;   // evita overlap Wit
-    private readonly List<byte> pcmBuffer = new List<byte>(); // byte 16-bit mono 16 kHz
-    private readonly List<string> transcriptionBuffer = new List<string>(); // accumula trascrizioni
+    private bool                 isListening       = false;
+    private bool                 requestInProgress = false;
+    private readonly List<byte>  pcmBuffer          = new();
+    private readonly List<string>transcriptionBuffer = new();
+
+    /*────── Parole-chiave (“intents” locali) ─────*/
+    private static readonly string[] ACTIVATE = { "ehi agente", "ciao agente", "hey agente" };
+    private static readonly string[] REPEAT   = { "ripeti", "di nuovo", "ripetilo" };
+    private static readonly string[] STOP     = { "basta", "stop", "ferma", "zitto", "silenzio" };
 
     /*───────────────────────── Unity life-cycle ─────────────────*/
     private void Awake()
     {
+        if (responseHandler == null) responseHandler = ResponseHandler.Instance;
+        uiOrb?.SetState(AgentUIController.AgentState.None);
+
         var ve = appVoice.VoiceEvents;
         ve.OnPartialTranscription.AddListener(OnPartialTranscription);
-        ve.OnFullTranscription.AddListener(OnFullTranscription);
-        ve.OnRequestCompleted.AddListener(OnRequestCompleted);
+        ve.OnFullTranscription   .AddListener(OnFullTranscription);
+        ve.OnRequestCompleted    .AddListener(OnRequestCompleted);
+
+        ve.OnStoppedListening                    .AddListener(StopListening);
+        ve.OnStoppedListeningDueToInactivity     .AddListener(StopListening);
+        ve.OnStoppedListeningDueToTimeout        .AddListener(StopListening);
 
         if (AudioBuffer.Instance != null)
-        {
             AudioBuffer.Instance.Events.OnByteDataReady.AddListener(OnByteDataReady);
-            Debug.Log("[VoiceManager] Subscribed to OnByteDataReady.");
-        }
         else
             Debug.LogError("[VoiceManager] AudioBuffer.Instance is null!");
     }
@@ -49,8 +63,8 @@ public class VoiceManager : MonoBehaviour
     {
         var ve = appVoice.VoiceEvents;
         ve.OnPartialTranscription.RemoveListener(OnPartialTranscription);
-        ve.OnFullTranscription.RemoveListener(OnFullTranscription);
-        ve.OnRequestCompleted.RemoveListener(OnRequestCompleted);
+        ve.OnFullTranscription   .RemoveListener(OnFullTranscription);
+        ve.OnRequestCompleted    .RemoveListener(OnRequestCompleted);
 
         if (AudioBuffer.Instance != null)
             AudioBuffer.Instance.Events.OnByteDataReady.RemoveListener(OnByteDataReady);
@@ -62,10 +76,10 @@ public class VoiceManager : MonoBehaviour
         if (isListening || requestInProgress) return;
 
         Debug.Log("[VoiceManager] StartListening");
-        pcmBuffer.Clear();
-        transcriptionBuffer.Clear(); // reset trascrizioni
-        isListening = true;
+        ResetBuffers();
+        isListening       = true;
         requestInProgress = true;
+        uiOrb?.SetState(AgentUIController.AgentState.Listening);
         appVoice.Activate();
     }
 
@@ -76,70 +90,83 @@ public class VoiceManager : MonoBehaviour
         Debug.Log("[VoiceManager] StopListening");
         isListening = false;
         appVoice.Deactivate();
+        uiOrb?.SetState(AgentUIController.AgentState.None);
 
-        // Usa il testo parziale come fallback se il buffer è vuoto
-        string fullTranscription = transcriptionBuffer.Count > 0
-            ? string.Join(" ", transcriptionBuffer)
-            : transcriptionText.text;
+        /*── Trascrizione definitiva ──*/
+        string full = transcriptionBuffer.Count > 0 ? string.Join(" ", transcriptionBuffer)
+                                                    : transcriptionText.text;
+        string lower = full.ToLowerInvariant();
 
-        Debug.Log($"[VoiceManager] Final transcription: {fullTranscription}");
-        StartCoroutine(asyncRequestHandler.SendTextAsync(fullTranscription));
+        /*── Intents locali ──*/
+        if (ContainsAny(lower, REPEAT))
+        { responseHandler?.RepeatLastResponse();  ResetBuffers(); return; }
 
-        // Converti buffer audio in WAV e invia
-        if (pcmBuffer.Count > 0)
-        {
-            byte[] wav = ConvertPCMToWAV(pcmBuffer.ToArray(), 1, 16_000);
-            string fname = $"wit_{System.DateTime.Now:yyyyMMdd_HHmmss}.wav";
-            StartCoroutine(asyncRequestHandler.SendAudioAsync(wav, fname));
-        }
+        if (ContainsAny(lower, STOP))
+        { responseHandler?.StopSpeech();          ResetBuffers(); return; }
 
-        pcmBuffer.Clear();    // reset per la prossima sessione
-        transcriptionBuffer.Clear(); // reset trascrizioni
+        if (ContainsAny(lower, ACTIVATE))
+        {                                           ResetBuffers(); return; }
+
+        /*── Invio al backend ──*/
+        StartCoroutine(asyncRequestHandler.SendTextAsync(full));
+        ResetBuffers();
     }
 
     public void CancelListening()
     {
         if (!isListening) return;
-
-        Debug.Log("[VoiceManager] CancelListening");
         isListening = false;
         appVoice.DeactivateAndAbortRequest();
         pcmBuffer.Clear();
+        uiOrb?.SetState(AgentUIController.AgentState.None);
     }
 
     /*───────────────────────── Wit callbacks ────────────────────*/
-    private void OnPartialTranscription(string text)
+    private void OnPartialTranscription(string txt)
     {
         if (!isListening) return;
-
-        Debug.Log($"[VoiceManager] … {text}");
-        transcriptionText.text = text;
-        onPartialTranscription?.Invoke(text);
+        transcriptionText.text = txt;
+        onPartialTranscription?.Invoke(txt);
     }
 
-    private void OnFullTranscription(string text)
+    private void OnFullTranscription(string txt)
     {
-        if (!isListening) return;   // safety
-
-        Debug.Log($"[VoiceManager] Full transcription received: {text}");
-        transcriptionBuffer.Add(text); // Accumula trascrizione
-        onCompleteTranscription?.Invoke(text);
+        if (!isListening) return;
+        transcriptionBuffer.Add(txt);
+        onCompleteTranscription?.Invoke(txt);
     }
 
     private void OnRequestCompleted()
     {
         requestInProgress = false;
-        Debug.Log("[VoiceManager] RequestCompleted (Wit finished)");
+        if (pcmBuffer.Count > 0)
+        {
+            byte[] wav  = ConvertPCMToWAV(pcmBuffer.ToArray(), 1, 16_000);
+            string name = $"wit_{System.DateTime.Now:yyyyMMdd_HHmmss}.wav";
+            StartCoroutine(asyncRequestHandler.SendAudioAsync(wav, name));
+        }
+        pcmBuffer.Clear();
+        Debug.Log("[VoiceManager] RequestCompleted");
     }
 
     private void OnByteDataReady(byte[] data, int offset, int length)
     {
-        if (!isListening && !requestInProgress) return;   // accoda solo in sessione
-        for (int i = offset; i < offset + length; i++)
-            pcmBuffer.Add(data[i]);
+        if (!isListening && !requestInProgress) return;
+        for (int i = offset; i < offset + length; i++) pcmBuffer.Add(data[i]);
     }
 
-    /*───────────────────────── Utility WAV ─────────────────────*/
+    /*───────────────────────── Helpers ──────────────────────────*/
+    private static bool ContainsAny(string src, string[] keys)
+    { foreach (string k in keys) if (src.Contains(k)) return true; return false; }
+
+    private void ResetBuffers()
+    {
+        pcmBuffer.Clear();
+        transcriptionBuffer.Clear();
+        transcriptionText.text = "";
+    }
+
+    /*────────────────────── Utility WAV / Clip ─────────────────*/
     public static byte[] ConvertPCMToWAV(byte[] pcm, int channels, int sampleRate)
     {
         using var m = new MemoryStream();
@@ -149,42 +176,31 @@ public class VoiceManager : MonoBehaviour
         w.Write(System.Text.Encoding.ASCII.GetBytes("RIFF"));
         w.Write(36 + pcm.Length);
         w.Write(System.Text.Encoding.ASCII.GetBytes("WAVEfmt "));
-        w.Write(16);               // PCM header length
-        w.Write((short)1);         // PCM
+        w.Write(16);
+        w.Write((short)1);
         w.Write((short)channels);
         w.Write(sampleRate);
         w.Write(byteRate);
         w.Write((short)(channels * 2));
-        w.Write((short)16);        // bits per sample
+        w.Write((short)16);
         w.Write(System.Text.Encoding.ASCII.GetBytes("data"));
         w.Write(pcm.Length);
         w.Write(pcm);
         w.Flush();
         return m.ToArray();
     }
-    
-    /*───────────────────────── Utility: AudioClip ──────────────────*/
+
     public AudioClip GetRecordedAudioClip()
     {
-        // Chiama questo metodo dopo che la richiesta è completa
-        // (o in StopListening) quando pcmBuffer contiene l’intero utterance.
-        int sampleCount = pcmBuffer.Count / 2;          // 16-bit ⇒ 2 byte per sample
+        int sampleCount = pcmBuffer.Count / 2;
         float[] samples = new float[sampleCount];
-
         for (int i = 0; i < sampleCount; i++)
         {
-            short sample16 = (short)(pcmBuffer[i * 2] |
-                                    (pcmBuffer[i * 2 + 1] << 8));
-            samples[i] = sample16 / 32768f;             // normalizza in [-1,1]
+            short s16  = (short)(pcmBuffer[i * 2] | (pcmBuffer[i * 2 + 1] << 8));
+            samples[i] = s16 / 32768f;
         }
-
-        var clip = AudioClip.Create("WitClip",
-                                    sampleCount,
-                                    1,          // mono
-                                    16_000,
-                                    false);
+        var clip = AudioClip.Create("WitClip", sampleCount, 1, 16_000, false);
         clip.SetData(samples, 0);
         return clip;
     }
-
 }
