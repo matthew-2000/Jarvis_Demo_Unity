@@ -51,13 +51,25 @@ public class ResponseHandler : MonoBehaviour
     /*────────────────────── Event handlers ─────────────────────*/
     private void HandleTextResponse(string json)
     {
-        // Estrai il testo dal JSON di risposta
-        string llm = responseRegex.Match(json) is { Success: true } m
-            ? m.Groups[1].Value
-            : json;                                // fallback se regex fallisce
+        string raw = responseRegex.Match(json) is { Success: true } m
+                    ? m.Groups[1].Value
+                    : json;
+
+        string llm = DecodeUnicodeEscapes(raw);   // 🔸 decodifica
 
         lastLLMResponse = llm;
         SpeakImmediate(llm);
+    }
+
+    /*─────────────────────── Decodifica Unicode ──────────────────*/
+    // 🔸 NEW: helper che converte \uXXXX ➜ carattere reale
+    private static string DecodeUnicodeEscapes(string src)
+    {
+        return System.Text.RegularExpressions.Regex.Replace(
+            src,
+            @"\\u(?<val>[0-9a-fA-F]{4})",
+            m => ((char)System.Convert.ToInt32(m.Groups["val"].Value, 16)).ToString()
+        );
     }
 
     /*─────────────────────── Parla subito ──────────────────────*/

@@ -13345,7 +13345,7 @@ MonoBehaviour:
   PrependedText: 
   AppendedText: 
   _ttsService: {fileID: 926858047}
-  presetVoiceID: WIT$COLIN
+  presetVoiceID: WIT$COOPER
   customWitVoiceSettings:
     SettingsId: 
     PrependedText: 
@@ -20466,11 +20466,11 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1441615565}
+  - component: {fileID: 1441615570}
   - component: {fileID: 1441615568}
   - component: {fileID: 1441615567}
   - component: {fileID: 1441615566}
   - component: {fileID: 1441615569}
-  - component: {fileID: 1441615570}
   m_Layer: 0
   m_Name: ExternalOrb
   m_TagString: Untagged
@@ -20618,6 +20618,8 @@ MonoBehaviour:
   pulseWhileSpeaking: 1
   pulseAmplitude: 0.25
   pulseSpeed: 2.5
+  innerOrbRenderer: {fileID: 653417938}
+  innerColorProperty: _OrbColor
 --- !u!1 &1443551637
 GameObject:
   m_ObjectHideFlags: 0

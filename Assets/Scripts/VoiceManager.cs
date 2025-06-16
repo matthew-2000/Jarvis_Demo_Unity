@@ -28,10 +28,10 @@ public class VoiceManager : MonoBehaviour
     [SerializeField] private AgentUIController uiOrb;
 
     /*───────────────────────── Internals ─────────────────────────*/
-    private bool                 isListening       = false;
-    private bool                 requestInProgress = false;
-    private readonly List<byte>  pcmBuffer          = new();
-    private readonly List<string>transcriptionBuffer = new();
+    private bool                isListening       = false;
+    private bool                requestInProgress = false;
+    private readonly List<byte> pcmBuffer           = new();
+    private readonly List<string> transcriptionBuffer = new();
 
     /*────── Parole-chiave (“intents” locali) ─────*/
     private static readonly string[] ACTIVATE = { "ehi agente", "ciao agente", "hey agente" };
@@ -41,7 +41,9 @@ public class VoiceManager : MonoBehaviour
     /*───────────────────────── Unity life-cycle ─────────────────*/
     private void Awake()
     {
-        if (responseHandler == null) responseHandler = ResponseHandler.Instance;
+        if (responseHandler == null)
+            responseHandler = ResponseHandler.Instance;
+
         uiOrb?.SetState(AgentUIController.AgentState.None);
 
         var ve = appVoice.VoiceEvents;
@@ -49,9 +51,9 @@ public class VoiceManager : MonoBehaviour
         ve.OnFullTranscription   .AddListener(OnFullTranscription);
         ve.OnRequestCompleted    .AddListener(OnRequestCompleted);
 
-        ve.OnStoppedListening                    .AddListener(StopListening);
-        ve.OnStoppedListeningDueToInactivity     .AddListener(StopListening);
-        ve.OnStoppedListeningDueToTimeout        .AddListener(StopListening);
+        ve.OnStoppedListening                 .AddListener(StopListening);
+        ve.OnStoppedListeningDueToInactivity  .AddListener(StopListening);
+        ve.OnStoppedListeningDueToTimeout     .AddListener(StopListening);
 
         if (AudioBuffer.Instance != null)
             AudioBuffer.Instance.Events.OnByteDataReady.AddListener(OnByteDataReady);
@@ -66,6 +68,10 @@ public class VoiceManager : MonoBehaviour
         ve.OnFullTranscription   .RemoveListener(OnFullTranscription);
         ve.OnRequestCompleted    .RemoveListener(OnRequestCompleted);
 
+        ve.OnStoppedListening                 .RemoveListener(StopListening);
+        ve.OnStoppedListeningDueToInactivity  .RemoveListener(StopListening);
+        ve.OnStoppedListeningDueToTimeout     .RemoveListener(StopListening);
+
         if (AudioBuffer.Instance != null)
             AudioBuffer.Instance.Events.OnByteDataReady.RemoveListener(OnByteDataReady);
     }
@@ -76,9 +82,10 @@ public class VoiceManager : MonoBehaviour
         if (isListening || requestInProgress) return;
 
         Debug.Log("[VoiceManager] StartListening");
-        ResetBuffers();
+        ResetTextBuffers();                 // non svuotiamo l’audio qui
         isListening       = true;
         requestInProgress = true;
+
         uiOrb?.SetState(AgentUIController.AgentState.Listening);
         appVoice.Activate();
     }
@@ -92,32 +99,36 @@ public class VoiceManager : MonoBehaviour
         appVoice.Deactivate();
         uiOrb?.SetState(AgentUIController.AgentState.None);
 
-        /*── Trascrizione definitiva ──*/
-        string full = transcriptionBuffer.Count > 0 ? string.Join(" ", transcriptionBuffer)
-                                                    : transcriptionText.text;
+        /*── Trascrizione finale ──*/
+        string full  = transcriptionBuffer.Count > 0
+                     ? string.Join(" ", transcriptionBuffer)
+                     : transcriptionText.text;
         string lower = full.ToLowerInvariant();
 
         /*── Intents locali ──*/
         if (ContainsAny(lower, REPEAT))
-        { responseHandler?.RepeatLastResponse();  ResetBuffers(); return; }
+        { responseHandler?.RepeatLastResponse();  ResetTextBuffers(); return; }
 
         if (ContainsAny(lower, STOP))
-        { responseHandler?.StopSpeech();          ResetBuffers(); return; }
+        { responseHandler?.StopSpeech();          ResetTextBuffers(); return; }
 
         if (ContainsAny(lower, ACTIVATE))
-        {                                           ResetBuffers(); return; }
+        {                                         ResetTextBuffers(); return; }
 
-        /*── Invio al backend ──*/
-        StartCoroutine(asyncRequestHandler.SendTextAsync(full));
-        ResetBuffers();
+        if (!string.IsNullOrWhiteSpace(full))
+            StartCoroutine(asyncRequestHandler.SendTextAsync(full));
+
+        ResetTextBuffers();                      // audio buffer rimane intatto
     }
 
     public void CancelListening()
     {
         if (!isListening) return;
+
         isListening = false;
         appVoice.DeactivateAndAbortRequest();
-        pcmBuffer.Clear();
+        ResetAudioBuffer();
+        ResetTextBuffers();
         uiOrb?.SetState(AgentUIController.AgentState.None);
     }
 
@@ -139,34 +150,43 @@ public class VoiceManager : MonoBehaviour
     private void OnRequestCompleted()
     {
         requestInProgress = false;
+
         if (pcmBuffer.Count > 0)
         {
-            byte[] wav  = ConvertPCMToWAV(pcmBuffer.ToArray(), 1, 16_000);
+            int sr = AudioBuffer.Instance.AudioEncoding.samplerate; // es. 48000 su Quest
+            byte[] wav  = ConvertPCMToWAV(pcmBuffer.ToArray(), 1, sr);
             string name = $"wit_{System.DateTime.Now:yyyyMMdd_HHmmss}.wav";
             StartCoroutine(asyncRequestHandler.SendAudioAsync(wav, name));
         }
-        pcmBuffer.Clear();
+        ResetAudioBuffer();
+
         Debug.Log("[VoiceManager] RequestCompleted");
     }
 
     private void OnByteDataReady(byte[] data, int offset, int length)
     {
         if (!isListening && !requestInProgress) return;
-        for (int i = offset; i < offset + length; i++) pcmBuffer.Add(data[i]);
+        for (int i = offset; i < offset + length; i++)
+            pcmBuffer.Add(data[i]);
     }
 
     /*───────────────────────── Helpers ──────────────────────────*/
     private static bool ContainsAny(string src, string[] keys)
-    { foreach (string k in keys) if (src.Contains(k)) return true; return false; }
-
-    private void ResetBuffers()
     {
-        pcmBuffer.Clear();
+        foreach (string k in keys)
+            if (src.Contains(k)) return true;
+        return false;
+    }
+
+    private void ResetTextBuffers()
+    {
         transcriptionBuffer.Clear();
         transcriptionText.text = "";
     }
 
-    /*────────────────────── Utility WAV / Clip ─────────────────*/
+    private void ResetAudioBuffer() => pcmBuffer.Clear();
+
+    /*────────────────── Utility WAV / Clip ─────────────────────*/
     public static byte[] ConvertPCMToWAV(byte[] pcm, int channels, int sampleRate)
     {
         using var m = new MemoryStream();
@@ -190,6 +210,7 @@ public class VoiceManager : MonoBehaviour
         return m.ToArray();
     }
 
+    /*── facoltativo: clip per debug ─*/
     public AudioClip GetRecordedAudioClip()
     {
         int sampleCount = pcmBuffer.Count / 2;
@@ -199,7 +220,10 @@ public class VoiceManager : MonoBehaviour
             short s16  = (short)(pcmBuffer[i * 2] | (pcmBuffer[i * 2 + 1] << 8));
             samples[i] = s16 / 32768f;
         }
-        var clip = AudioClip.Create("WitClip", sampleCount, 1, 16_000, false);
+        int sr = AudioBuffer.Instance != null
+                 ? AudioBuffer.Instance.AudioEncoding.samplerate
+                 : 16000;
+        var clip = AudioClip.Create("WitClip", sampleCount, 1, sr, false);
         clip.SetData(samples, 0);
         return clip;
     }
