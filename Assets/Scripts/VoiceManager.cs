@@ -65,6 +65,11 @@ public class VoiceManager : MonoBehaviour
         "vienimi vicino", "qui vicino"
     };
 
+    private static readonly string[] RESET_CONVERSATION = {
+        "resetta", "resetta conversazione", "ricomincia", 
+        "nuova conversazione", "cancella tutto", "azzera"
+    };
+
     /*───────────────────────── Unity life-cycle ─────────────────*/
     private void Awake()
     {
@@ -145,6 +150,13 @@ public class VoiceManager : MonoBehaviour
         if (ContainsAny(lower, MOVE_HERE))
         {
             agentMover?.MoveInFrontOfUser();   
+            ResetTextBuffers();
+            return;
+        }
+
+        if (ContainsAny(lower, RESET_CONVERSATION))
+        {
+            StartCoroutine(asyncRequestHandler.ResetConversation());
             ResetTextBuffers();
             return;
         }

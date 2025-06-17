@@ -88,6 +88,7 @@ public class AsyncRequestHandler : MonoBehaviour
     {
         WWWForm form = new WWWForm();
         form.AddField("user_id", userID);
+        Debug.Log("[AsyncRequestHandler] Resetting conversation on server...");
 
         using (UnityWebRequest req = UnityWebRequest.Post(endpoints["reset"], form))
         {
