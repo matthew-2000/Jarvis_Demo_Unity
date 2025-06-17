@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 [RequireComponent(typeof(Renderer))]
@@ -6,49 +7,65 @@ public class AgentUIController : MonoBehaviour
 {
     public enum AgentState { None, Listening, Speaking }
 
-    /*───────────── Shader property IDs ─────────────*/
+    /*────────────────── Shader IDs ──────────────────*/
     private static readonly int MOV_SPEED = Shader.PropertyToID("_SurfaceMovementSpeed");
     private static readonly int NOISE     = Shader.PropertyToID("_NoiseScale");
     private static readonly int ORB_COLOR = Shader.PropertyToID("_OrbColor");
     private static readonly int ENERGY    = Shader.PropertyToID("_EnergyLevel");
 
-    /*───────────── Visual presets ─────────────*/
-    [Header("State ‣ Visual Presets")]
+    /*───────────────── State presets ─────────────────*/
+    [Header("State ‣ Visual presets")]
     [SerializeField] private StateVisual noneState      = new(0f,   0f,  Color.white);
-    [SerializeField] private StateVisual listeningState = new(0.01f,0.10f,new Color(0.2f,0.9f,1f));
-    [SerializeField] private StateVisual speakingState  = new(0.02f,0.40f,new Color(1f,0.55f,0.2f));
+    [SerializeField] private StateVisual listeningState = new(0.01f,0.10f,new Color(0.20f,0.90f,1f));
+    [SerializeField] private StateVisual speakingState  = new(0.02f,0.40f,new Color(1f,0.55f,0.20f));
 
-    /*───────────── Animation settings ─────────────*/
+    /*──────────────── Emotion presets ────────────────*/
+    [Header("Emotion ‣ Visual presets")]
+    [SerializeField] private EmotionVisual joyPreset      = new(new Color(1f,0.86f,0.25f), 0.02f, 0.45f);
+    [SerializeField] private EmotionVisual sadnessPreset  = new(new Color(0.26f,0.55f,1f), 0.005f,0.15f);
+    [SerializeField] private EmotionVisual angerPreset    = new(new Color(1f,0.23f,0.11f), 0.03f, 0.60f);
+    [SerializeField] private EmotionVisual fearPreset     = new(new Color(0.65f,0.20f,0.90f),0.015f,0.30f);
+    [SerializeField] private EmotionVisual surprisePreset = new(new Color(0.20f,1f,0.95f), 0.025f,0.50f);
+    [SerializeField] private EmotionVisual disgustPreset  = new(new Color(0.35f,0.75f,0.20f),0.018f,0.35f);
+
+    /*──────────────── Animation settings ─────────────*/
     [Header("Animation")]
     [SerializeField, Range(0.05f,2f)] private float transitionDuration = 0.25f;
     [SerializeField] private bool  pulseWhileSpeaking = true;
     [SerializeField, Range(0f,1f)] private float pulseAmplitude = 0.25f;
     [SerializeField, Range(0.2f,5f)] private float pulseSpeed   = 2.5f;
 
-    /*───────────── Inner orb sync ─────────────*/
+    /*──────────────── Inner orb sync (optional) ──────*/
     [Header("Inner Orb (optional)")]
-    [Tooltip("Renderer del piccolo orb interno che deve avere lo stesso colore.")]
     [SerializeField] private Renderer innerOrbRenderer;
-    [Tooltip("Nome property colore nello shader dell’inner orb (default _OrbColor o _BaseColor)")]
     [SerializeField] private string   innerColorProperty = "_OrbColor";
 
-    /*───────────── Internals ─────────────*/
+    /*──────────────── Internals ──────────────────────*/
     private AgentState currentState = AgentState.None;
-    private Renderer   rend;
+    private readonly Dictionary<string,EmotionVisual> emotionLUT = new();
+    private Renderer rend;
     private MaterialPropertyBlock mpb;
     private MaterialPropertyBlock innerMpb;
     private Coroutine transitionRoutine;
 
-    /*────────────────── Unity life-cycle ──────────────────*/
+    /*──────────────── Unity life-cycle ───────────────*/
     private void Awake()
     {
-        rend     = GetComponent<Renderer>();
-        mpb      = new MaterialPropertyBlock();
+        rend = GetComponent<Renderer>();
+        mpb  = new MaterialPropertyBlock();
+        if (innerOrbRenderer) innerMpb = new MaterialPropertyBlock();
 
-        if (innerOrbRenderer != null)
-            innerMpb = new MaterialPropertyBlock();
+        // Costruisco la Look-Up-Table emozioni → preset
+        emotionLUT["joy"]      = joyPreset;
+        emotionLUT["happiness"]= joyPreset;   // sinonimi frequenti
+        emotionLUT["sadness"]  = sadnessPreset;
+        emotionLUT["anger"]    = angerPreset;
+        emotionLUT["fear"]     = fearPreset;
+        emotionLUT["surprise"] = surprisePreset;
+        emotionLUT["disgust"]  = disgustPreset;
+        emotionLUT["neutral"]  = noneState.ToEmotionVisual(); // fallback
 
-        ApplyStateInstant(noneState);      // preset iniziale
+        ApplyStateInstant(noneState);
     }
 
     private void Update()
@@ -61,7 +78,7 @@ public class AgentUIController : MonoBehaviour
         }
     }
 
-    /*────────────────── API pubblica ─────────────────────*/
+    /*──────────────────── API Stati ──────────────────*/
     public void SetState(AgentState newState)
     {
         if (newState == currentState) return;
@@ -71,42 +88,45 @@ public class AgentUIController : MonoBehaviour
         transitionRoutine = StartCoroutine(TransitionTo(GetPreset(newState)));
     }
 
-    public void ForceNone()      => SetState(AgentState.None);
-    public void ForceListening() => SetState(AgentState.Listening);
-    public void ForceSpeaking()  => SetState(AgentState.Speaking);
-
-    public void UpdateOrbColor(Color c)
+    /*────────────────── API Emozioni ─────────────────*/
+    public void ApplyEmotion(string label, float intensity = 1f)
     {
-        mpb.SetColor(ORB_COLOR, c);
+        if (string.IsNullOrWhiteSpace(label)) return;
+        label = label.ToLowerInvariant();
+
+        if (!emotionLUT.TryGetValue(label, out var preset))
+            preset = emotionLUT["neutral"];
+
+        // Scala velocità e noise con l’intensità (0–1)
+        float targSpeed = preset.speed  * Mathf.Clamp01(intensity * 1.2f);
+        float targNoise = preset.noise  * Mathf.Clamp01(intensity * 1.2f);
+
+        mpb.SetColor(ORB_COLOR, preset.color);
+        mpb.SetFloat(MOV_SPEED, targSpeed);
+        mpb.SetFloat(NOISE,     targNoise);
+        mpb.SetFloat(ENERGY,    1f + intensity * 0.5f);
         rend.SetPropertyBlock(mpb);
-        SyncInnerOrbColor(c);
+        SyncInnerOrbColor(preset.color);
     }
 
-    public void UpdateOrbEnergy(float e)
-    {
-        mpb.SetFloat(ENERGY, e);
-        rend.SetPropertyBlock(mpb);
-    }
-
-    /*───────────────── Transition helpers ────────────────*/
+    /*────────────────── Helpers interni ──────────────*/
     private IEnumerator TransitionTo(StateVisual target)
     {
         rend.GetPropertyBlock(mpb);
-
         float startSpeed = mpb.GetFloat(MOV_SPEED);
         float startNoise = mpb.GetFloat(NOISE);
-        Color startColor = mpb.GetColor(ORB_COLOR);
+        Color startCol   = mpb.GetColor(ORB_COLOR);
 
         float t = 0f;
         while (t < transitionDuration)
         {
             float k = t / transitionDuration;
-            mpb.SetFloat(MOV_SPEED, Mathf.Lerp(startSpeed, target.speed, k));
-            mpb.SetFloat(NOISE,     Mathf.Lerp(startNoise, target.noise, k));
-            Color col = Color.Lerp(startColor, target.color, k);
-            mpb.SetColor(ORB_COLOR, col);
+            mpb.SetFloat(MOV_SPEED, Mathf.Lerp(startSpeed, target.speed,  k));
+            mpb.SetFloat(NOISE,     Mathf.Lerp(startNoise, target.noise,  k));
+            Color c = Color.Lerp(startCol, target.color, k);
+            mpb.SetColor(ORB_COLOR, c);
             rend.SetPropertyBlock(mpb);
-            SyncInnerOrbColor(col);                // ⇦ aggiorna anche l’interno
+            SyncInnerOrbColor(c);
             t += Time.deltaTime;
             yield return null;
         }
@@ -125,7 +145,7 @@ public class AgentUIController : MonoBehaviour
 
     private void SyncInnerOrbColor(Color c)
     {
-        if (innerOrbRenderer == null) return;
+        if (!innerOrbRenderer) return;
         innerOrbRenderer.GetPropertyBlock(innerMpb);
         innerMpb.SetColor(innerColorProperty, c);
         innerOrbRenderer.SetPropertyBlock(innerMpb);
@@ -139,13 +159,16 @@ public class AgentUIController : MonoBehaviour
         _                    => noneState
     };
 
-    /*──────────── struct per preset ────────────*/
-    [System.Serializable]
-    private struct StateVisual
+    /*───────────── struct di supporto ───────────────*/
+    [System.Serializable] private struct StateVisual
     {
-        public float speed;
-        public float noise;
-        public Color color;
+        public float speed, noise; public Color color;
         public StateVisual(float s,float n,Color c){speed=s;noise=n;color=c;}
+        public EmotionVisual ToEmotionVisual() => new EmotionVisual(color,speed,noise);
+    }
+    [System.Serializable] private struct EmotionVisual
+    {
+        public Color color; public float speed, noise;
+        public EmotionVisual(Color c,float s,float n){color=c;speed=s;noise=n;}
     }
 }

@@ -346,7 +346,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8084449565680659330, guid: 6c55e6853bbc1a6488fad71f420edffa, type: 3}
       propertyPath: _whenUnselected.m_PersistentCalls.m_Calls.Array.size
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8084449565680659330, guid: 6c55e6853bbc1a6488fad71f420edffa, type: 3}
       propertyPath: _onSelect.m_PersistentCalls.m_Calls.Array.data[0].m_Mode
@@ -4814,7 +4814,7 @@ SkinnedMeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: d641a50c4fe4ee3489a64cf52b76ae79, type: 2}
+  - {fileID: 2100000, guid: d5e2ab92e53f69e40a760f658d55cb3d, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -12540,8 +12540,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 02adf93660a7d4fe3a8b5e58d46daad6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  baseUrl: http://192.168.1.13:5001
-  userID: unity_client
+  baseUrl: http://172.20.10.2:5001
+  userID: unity_client1
   OnTextResponseReceived:
     m_PersistentCalls:
       m_Calls: []
@@ -13017,7 +13017,7 @@ SkinnedMeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: d641a50c4fe4ee3489a64cf52b76ae79, type: 2}
+  - {fileID: 2100000, guid: d5e2ab92e53f69e40a760f658d55cb3d, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -15367,6 +15367,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   jarvis: {fileID: 166774244}
+  agentMover: {fileID: 1652273535}
 --- !u!4 &1095933685
 Transform:
   m_ObjectHideFlags: 0
@@ -16877,7 +16878,8 @@ Transform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 1926533860}
   m_Father: {fileID: 123001549}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!20 &1220610142
@@ -19068,7 +19070,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1348745139
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -20615,6 +20617,30 @@ MonoBehaviour:
     speed: 0.02
     noise: 0.4
     color: {r: 1, g: 0.55, b: 0.2, a: 1}
+  joyPreset:
+    color: {r: 1, g: 0.86, b: 0.25, a: 1}
+    speed: 0.02
+    noise: 0.45
+  sadnessPreset:
+    color: {r: 0.26, g: 0.55, b: 1, a: 1}
+    speed: 0.005
+    noise: 0.15
+  angerPreset:
+    color: {r: 1, g: 0.23, b: 0.11, a: 1}
+    speed: 0.03
+    noise: 0.6
+  fearPreset:
+    color: {r: 0.65, g: 0.2, b: 0.9, a: 1}
+    speed: 0.015
+    noise: 0.3
+  surprisePreset:
+    color: {r: 0.2, g: 1, b: 0.95, a: 1}
+    speed: 0.025
+    noise: 0.5
+  disgustPreset:
+    color: {r: 0.35, g: 0.75, b: 0.2, a: 1}
+    speed: 0.018
+    noise: 0.35
   transitionDuration: 0.25
   pulseWhileSpeaking: 1
   pulseAmplitude: 0.25
@@ -24179,7 +24205,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 1.5, z: 0.3}
-  m_LocalScale: {x: 0.35, y: 0.35, z: 0.35}
+  m_LocalScale: {x: 0.5, y: 0.5, z: 0.5}
   m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 318715071}
@@ -24635,7 +24661,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 31321ba15b8f8eb4c954353edc038b1d, type: 2}
+  - {fileID: 2100000, guid: 6fb60ad978ac4184da102fbaf103225d, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -24809,7 +24835,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1689492166
 RectTransform:
   m_ObjectHideFlags: 0
@@ -25531,7 +25557,7 @@ SkinnedMeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: d641a50c4fe4ee3489a64cf52b76ae79, type: 2}
+  - {fileID: 2100000, guid: d5e2ab92e53f69e40a760f658d55cb3d, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -28776,16 +28802,16 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1926533859}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0.16613694, z: -0, w: 0.9861027}
-  m_LocalPosition: {x: -0.2194, y: 1.5, z: 0.3}
+  m_LocalRotation: {x: 0, y: -0.17364825, z: 0, w: 0.9848078}
+  m_LocalPosition: {x: -0.1, y: 0, z: 0.3}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1269452113}
   - {fileID: 1669937593}
   - {fileID: 475438962}
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: -19.127, z: 0}
+  m_Father: {fileID: 1220610141}
+  m_LocalEulerAnglesHint: {x: 0, y: -20, z: 0}
 --- !u!114 &1926533861
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -29849,7 +29875,7 @@ SkinnedMeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: d641a50c4fe4ee3489a64cf52b76ae79, type: 2}
+  - {fileID: 2100000, guid: d5e2ab92e53f69e40a760f658d55cb3d, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -32062,6 +32088,5 @@ SceneRoots:
   - {fileID: 331540143}
   - {fileID: 2103733691}
   - {fileID: 954008971}
-  - {fileID: 1926533860}
   - {fileID: 2020280556}
   - {fileID: 1652273533}

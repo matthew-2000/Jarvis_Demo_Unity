@@ -1,109 +1,98 @@
 using System.Collections;
-using UnityEngine;
+using System.Collections.Generic;
+using System.Globalization;
 using System.Text.RegularExpressions;
+using UnityEngine;
 using Meta.WitAi.TTS.Utilities;
 using TMPro;
 
 public class ResponseHandler : MonoBehaviour
 {
-    [SerializeField] private AsyncRequestHandler asyncRequestHandler;   // endpoint I/O
-    [SerializeField] private TTSSpeaker          speaker;               // componente TTS
-    [SerializeField] private TextMeshPro         responseText;          // UI testuale
-    [SerializeField] private AgentUIController   uiOrb;                 // Orb visivo
+    [SerializeField] private AsyncRequestHandler asyncRequestHandler;
+    [SerializeField] private TTSSpeaker speaker;
+    [SerializeField] private TextMeshPro responseText;
+    [SerializeField] private AgentUIController uiOrb;
 
-    /*────────── SINGLETON (per accesso da VoiceManager) ─────────*/
     public static ResponseHandler Instance { get; private set; }
 
-    /*────────── Regex per estrarre "response":"..." dal JSON ────*/
     private static readonly Regex responseRegex =
         new Regex("\"response\"\\s*:\\s*\"([^\"]+)\"", RegexOptions.Compiled);
 
-    /*────────── Stato ultima risposta ───────────────────────────*/
+    /*──────── NEW: regex per coppie emozione-valore ───────*/
+    private static readonly Regex emoPairRx =
+        new Regex("\"(?<key>[^\"]+)\"\\s*:\\s*\"(?<val>[0-9\\.]+)\"", RegexOptions.Compiled);
+
     private string lastLLMResponse = "";
 
-    /*───────────────────────── Unity lifecycle ──────────────────*/
     private void Awake()
     {
         Instance = this;
-
-        asyncRequestHandler.OnTextResponseReceived .AddListener(HandleTextResponse);
-        asyncRequestHandler.OnAudioResponseReceived.AddListener(_ => { /* non usato ora */ });
+        asyncRequestHandler.OnTextResponseReceived.AddListener(HandleTextResponse);
+        asyncRequestHandler.OnAudioResponseReceived.AddListener(HandleEmotionResponse);
     }
 
-    /*─────────────────────── API pubbliche ──────────────────────*/
-    public void RepeatLastResponse()
-    {
-        if (string.IsNullOrEmpty(lastLLMResponse))
-            return;
-
-        SpeakImmediate(lastLLMResponse);
-    }
-
-    public void StopSpeech()
-    {
-        if (speaker != null && speaker.IsSpeaking)
-            speaker.Stop();
-
-        StopAllCoroutines();                       // ferma eventuale wait-coroutine
-        uiOrb?.SetState(AgentUIController.AgentState.None);
-    }
-
-    /*────────────────────── Event handlers ─────────────────────*/
+    /*────────────────────── Chat LLM ─────────────────────*/
     private void HandleTextResponse(string json)
     {
-        string raw = responseRegex.Match(json) is { Success: true } m
-                    ? m.Groups[1].Value
-                    : json;
-
-        string llm = DecodeUnicodeEscapes(raw);   // 🔸 decodifica
-
+        string raw = responseRegex.Match(json) is { Success: true } m ? m.Groups[1].Value : json;
+        string llm = DecodeUnicodeEscapes(raw);
         lastLLMResponse = llm;
         SpeakImmediate(llm);
     }
 
-    /*─────────────────────── Decodifica Unicode ──────────────────*/
-    // 🔸 NEW: helper che converte \uXXXX ➜ carattere reale
-    private static string DecodeUnicodeEscapes(string src)
+    /*───────────── Emozioni da /upload_audio ─────────────*/
+    private void HandleEmotionResponse(string json)
     {
-        return System.Text.RegularExpressions.Regex.Replace(
-            src,
-            @"\\u(?<val>[0-9a-fA-F]{4})",
-            m => ((char)System.Convert.ToInt32(m.Groups["val"].Value, 16)).ToString()
-        );
+        if (!json.Contains("\"status\":\"inferred\"")) return; // ignoriamo “buffering”
+
+        // Cerco tutte le coppie chiave-valore nell’oggetto "emotions"
+        var matches = emoPairRx.Matches(json);
+        string topE = null; float topVal = 0f;
+
+        foreach (Match m in matches)
+        {
+            string k = m.Groups["key"].Value.ToLowerInvariant();
+            if (!float.TryParse(m.Groups["val"].Value, NumberStyles.Float, CultureInfo.InvariantCulture, out float v))
+                continue;
+            if (v > topVal) { topVal = v; topE = k; }
+        }
+
+        if (topE != null)
+        {
+            Debug.Log($"[Emotion] Top emotion = {topE} ({topVal:P0})");
+            uiOrb?.ApplyEmotion(topE, topVal);
+        }
     }
 
-    /*─────────────────────── Parla subito ──────────────────────*/
+    /*────────────────── Helpers ─────────────────────────*/
+    private static string DecodeUnicodeEscapes(string src) =>
+        Regex.Replace(src, @"\\u(?<val>[0-9a-fA-F]{4})",
+            m => ((char)System.Convert.ToInt32(m.Groups["val"].Value, 16)).ToString());
+
+    public void RepeatLastResponse()
+    {
+        if (!string.IsNullOrEmpty(lastLLMResponse)) SpeakImmediate(lastLLMResponse);
+    }
+    public void StopSpeech()
+    {
+        if (speaker && speaker.IsSpeaking) speaker.Stop();
+        StopAllCoroutines();
+        uiOrb?.SetState(AgentUIController.AgentState.None);
+    }
+
     private void SpeakImmediate(string text)
     {
         responseText.text = text;
-        if (speaker == null) return;
-
+        if (!speaker) return;
         StartCoroutine(SpeechCycle(text));
     }
 
     private IEnumerator SpeechCycle(string text)
     {
-        Debug.Log($"[SpeechCycle] Starting speech cycle for text: {text}");
-
-        // 1. chiedi al TTSSpeaker di generare/queue-are il clip
         speaker.Speak(text);
-        Debug.Log("[SpeechCycle] TTSSpeaker.Speak called.");
-
-        // 2. aspetta che inizi davvero
-        while (!speaker.IsSpeaking)
-            yield return null;
-
-        Debug.Log("[SpeechCycle] TTSSpeaker started speaking.");
+        while (!speaker.IsSpeaking) yield return null;
         uiOrb?.SetState(AgentUIController.AgentState.Speaking);
-
-        // 3. aspetta la fine
-        while (speaker.IsSpeaking)
-            yield return null;
-
-        Debug.Log("[SpeechCycle] TTSSpeaker finished speaking.");
+        while (speaker.IsSpeaking) yield return null;
         uiOrb?.SetState(AgentUIController.AgentState.None);
-
-        Debug.Log("[SpeechCycle] Speech cycle completed.");
     }
-
 }
