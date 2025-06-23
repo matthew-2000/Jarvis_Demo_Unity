@@ -4006,10 +4006,7 @@ MonoBehaviour:
     DataSource: 2
     RoomIndex: -1
     RoomPrefabs:
-    - {fileID: 5618556046422172173, guid: 029ede24e76b24d0888dc235dd0b96f2, type: 3}
     - {fileID: 5618556046422172173, guid: caa3755f1f2184eb7a9fd17b7cf1f1d3, type: 3}
-    - {fileID: 5618556046422172173, guid: 31818101cde292945ab80af5d14bec54, type: 3}
-    - {fileID: 5618556046422172173, guid: c2bd5595e9fe2493a92d4bc0bb264603, type: 3}
     SceneJsons: []
     LoadSceneOnStartup: 1
     SeatWidth: 0.6
@@ -12412,7 +12409,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 02adf93660a7d4fe3a8b5e58d46daad6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  baseUrl: http://172.20.10.2:5001
+  baseUrl: http://192.168.1.13:5001
   userID: unity_client1
   OnTextResponseReceived:
     m_PersistentCalls:
@@ -13865,17 +13862,13 @@ MonoBehaviour:
   PrefabsToSpawn:
   - Labels: 8
     Prefabs:
-    - {fileID: 6344767980783267782, guid: 5a995f9fd8fafcf479304ec16ce9c299, type: 3}
-    - {fileID: 8482147909517439867, guid: 82efbd6f209a6ab4c8e561fcd37a4810, type: 3}
-    - {fileID: 3438127250079161632, guid: ff25b715f02cfd947b8608c3d7de53c9, type: 3}
-    - {fileID: 5891184143697371457, guid: b43c4ed2c89ae4b4680f0d135a6950fd, type: 3}
+    - {fileID: 6270939209452363204, guid: 62becb4945b2547679bbb1540069db44, type: 3}
     PrefabSelection: 2
     MatchAspectRatio: 0
     CalculateFacingDirection: 0
     Scaling: 4
     Alignment: 4
     IgnorePrefabSize: 0
-  spacing: 0.25
 --- !u!4 &943967449
 Transform:
   m_ObjectHideFlags: 0
@@ -31836,7 +31829,7 @@ MonoBehaviour:
   Colliders: 1
   CutHoles: 0
   castShadows: 1
-  hideMesh: 0
+  hideMesh: 1
   Layer: 0
   textureCoordinateModes:
   - WallU: 5

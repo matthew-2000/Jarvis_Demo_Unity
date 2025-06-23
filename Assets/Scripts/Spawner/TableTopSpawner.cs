@@ -8,8 +8,6 @@ using System.Collections.Generic;
 /// </summary>
 public class TableTopSpawner : AnchorPrefabSpawner
 {
-    // distanza tra un oggetto e l’altro (in metri)
-    [SerializeField] private float spacing = 0.25f;
 
     /* ------------- non usiamo più CustomPrefabSelection ------------- */
     public override GameObject CustomPrefabSelection(
@@ -42,29 +40,45 @@ public class TableTopSpawner : AnchorPrefabSpawner
         float yaw = anchor.transform.rotation.eulerAngles.y;
         Quaternion rot = Quaternion.Euler(0f, yaw, 0f);
 
-        // larghezza disponibile
-        float width = plane.width;
-        float startX = center.x - (width * 0.5f) + spacing;
+        // Soglia minima di scala accettabile
+        float minScale = 0.5f;
 
         // ciclo su tutti i prefab configurati nel gruppo
         foreach (var group in PrefabsToSpawn)
         {
             if ((group.Labels & MRUKAnchor.SceneLabels.TABLE) == 0) continue;
 
-            float xPos = startX;
             foreach (var p in group.Prefabs)
             {
-                // calcola offset laterale
+                // Ottieni i bounds del prefab
                 var bounds = Utilities.GetPrefabBounds(p);
-                float halfW = bounds?.extents.x ?? 0.1f;
-                var localPos = new Vector3(xPos + halfW, center.y, center.z);
+                if (bounds == null) continue;
 
-                var go = Instantiate(p,
+                float prefabWidth = bounds.Value.size.x;
+                float prefabDepth = bounds.Value.size.z;
+
+                // Calcola la scala massima possibile per far entrare il prefab
+                float scaleX = plane.width / prefabWidth;
+                float scaleZ = plane.height / prefabDepth;
+                float scale = Mathf.Min(scaleX, scaleZ, 1f); // Non scalare sopra 1
+
+                Debug.Log($"Prefab: {p.name}, scaleX: {scaleX}, scaleZ: {scaleZ}, chosen scale: {scale}");
+
+                if (scale >= minScale)
+                {
+                    // Posiziona il prefab perfettamente al centro della superficie, 5cm più in alto
+                    var localPos = new Vector3(center.x, center.y, center.z + 0.05f);
+
+                    var go = Instantiate(p,
                         anchor.transform.TransformPoint(localPos),
                         rot,
                         anchor.transform);
 
-                xPos += (halfW * 2f) + spacing;
+                    go.transform.localScale = go.transform.localScale * scale;
+
+                    // Instanzia solo il primo prefab che ci sta
+                    return;
+                }
             }
         }
     }
