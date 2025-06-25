@@ -39,10 +39,6 @@ public class LiquidContainer : MonoBehaviour
         liquidRenderer.GetPropertyBlock(mpb);
         mpb.SetFloat(shaderFillProperty, fillWorld);
         liquidRenderer.SetPropertyBlock(mpb);
-
-#if UNITY_EDITOR
-        Debug.Log($"LiquidContainer: {currentMl}ml / {capacityMl}ml = {fillWorld}m");
-#endif
     }
 
 #if UNITY_EDITOR

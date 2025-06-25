@@ -31,6 +31,37 @@ Transform:
   m_Children: []
   m_Father: {fileID: 5048684479072882431}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1536536580986457632
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5849946253092117171}
+  m_Layer: 0
+  m_Name: PourPoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5849946253092117171
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1536536580986457632}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0.2328, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 5048684479072882431}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &3657119387696509249
 GameObject:
   m_ObjectHideFlags: 0
@@ -164,6 +195,8 @@ GameObject:
   - component: {fileID: 6222755414446257552}
   - component: {fileID: 6435398454209650846}
   - component: {fileID: 4451270513568484503}
+  - component: {fileID: 7491322787254527401}
+  - component: {fileID: 7025292202554645803}
   m_Layer: 0
   m_Name: Provetta
   m_TagString: Untagged
@@ -187,6 +220,7 @@ Transform:
   - {fileID: 8765369018303904825}
   - {fileID: 1367690907195944910}
   - {fileID: 9107631089746809336}
+  - {fileID: 5849946253092117171}
   - {fileID: 1382490557443657117}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -291,6 +325,42 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.036577895, y: 0.24406616, z: 0.03657791}
   m_Center: {x: -0.000000037252903, y: 0.121362604, z: 0}
+--- !u!114 &7491322787254527401
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5574145051960448069}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a1eca0d81d5ec42078abd89e459dfd7a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  source: {fileID: 7025292202554645803}
+  pourPoint: {fileID: 5849946253092117171}
+  pourAngle: 60
+  pourRate: 50
+  searchRadius: 0.25
+  receiverMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+--- !u!114 &7025292202554645803
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5574145051960448069}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9e245c14d219f45dbb872239e0d92b43, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  capacityMl: 200
+  startMl: 100
+  shaderFillProperty: _Fill
+  liquidRenderer: {fileID: 5610258853550571202}
 --- !u!1 &9048739069823951465
 GameObject:
   m_ObjectHideFlags: 0
@@ -411,5 +481,10 @@ PrefabInstance:
 --- !u!4 &1382490557443657117 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 8397947600820316773, guid: 4bfb397abe1c4422c9e65ca8581672ad, type: 3}
+  m_PrefabInstance: {fileID: 7468119435564279800}
+  m_PrefabAsset: {fileID: 0}
+--- !u!23 &5610258853550571202 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 3062363895950793018, guid: 4bfb397abe1c4422c9e65ca8581672ad, type: 3}
   m_PrefabInstance: {fileID: 7468119435564279800}
   m_PrefabAsset: {fileID: 0}

@@ -3,43 +3,52 @@ using UnityEngine;
 public class PourDetector : MonoBehaviour
 {
     [Header("References")]
-    [SerializeField] LiquidContainer source;    // il tuo stesso bicchiere
-    [SerializeField] Transform pourPoint;       // empty sul bordo superiore
+    [SerializeField] LiquidContainer source;
+    [SerializeField] Transform pourPoint;
 
     [Header("Tuning")]
-    [SerializeField] float pourAngle = 60f;     // ° oltre i quali si versa
-    [SerializeField] float pourRate  = 50f;     // ml / secondo
-    [SerializeField] float searchRadius = 0.25f;// quanto lontano cercare
+    [SerializeField] float pourAngle   = 60f;
+    [SerializeField] float pourRate    = 50f;   // ml/sec
+    [SerializeField] float searchRadius = 0.05f;
+    [SerializeField] LayerMask receiverMask = ~0; // opzionale: limita i collider da testare
 
-    void Reset()
-    {
-        source = GetComponent<LiquidContainer>();
-    }
+    void Reset() => source = GetComponent<LiquidContainer>();
 
     void Update()
     {
-        // 1. abbastanza inclinato?
-        if (Vector3.Angle(transform.up, Vector3.up) < pourAngle || source.CurrentMl <= 0f)
-            return;
+        // 1. inclinazione sufficiente?
+        if (Vector3.Angle(transform.up, Vector3.up) < pourAngle) return;
+        if (source.CurrentMl <= 0f)                             return;
 
-        // 2. determina quanto liquido versare questo frame
-        float delta = Mathf.Min(pourRate * Time.deltaTime, source.CurrentMl);
-        source.Remove(delta);
-
-        // 3. cerca un altro bicchiere vicino al punto di versamento
+        // 2. cerca un target che abbia sia LiquidContainer che PourDetector
         Collider[] hits = Physics.OverlapSphere(
-            pourPoint.position,
-            searchRadius);
+                            pourPoint.position,
+                            searchRadius,
+                            receiverMask);
+
+        LiquidContainer target = null;
 
         foreach (Collider col in hits)
         {
-            if (col.attachedRigidbody == null) continue;          // niente rigidbody? salta
-            LiquidContainer target = col.attachedRigidbody.GetComponent<LiquidContainer>();
-            if (target != null && target != source)
+            // deve avere un rigidbody (più performante risalire da lì)
+            if (!col.attachedRigidbody) continue;
+
+            // *** filtro: ci serve *sia* LiquidContainer *sia* PourDetector ***
+            var lc  = col.attachedRigidbody.GetComponent<LiquidContainer>();
+            var pd  = col.attachedRigidbody.GetComponent<PourDetector>();
+
+            if (lc != null && pd != null && lc != source)   // trovato!
             {
-                target.Add(delta);
-                break;  // trovato il primo, basta così
+                target = lc;
+                break;
             }
         }
+
+        if (target == null) return;           // nessun “vero bicchiere” sotto ⇒ non prelevo
+
+        // 3. trasferisci il volume
+        float delta = Mathf.Min(pourRate * Time.deltaTime, source.CurrentMl);
+        source.Remove(delta);
+        target.Add(delta);
     }
 }

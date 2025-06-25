@@ -318,7 +318,10 @@ MonoBehaviour:
   pourPoint: {fileID: 5728495773883333663}
   pourAngle: 60
   pourRate: 50
-  searchRadius: 0.25
+  searchRadius: 0.05
+  receiverMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
 --- !u!4 &666664954111300151 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 1044230619016210068, guid: 1836ec5a4a9706d42b8941d84940196f, type: 3}

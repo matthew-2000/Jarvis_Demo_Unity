@@ -180,7 +180,9 @@ PrefabInstance:
       value: Tavolo da Lavoro
       objectReference: {fileID: 0}
     m_RemovedComponents: []
-    m_RemovedGameObjects: []
+    m_RemovedGameObjects:
+    - {fileID: 8805894389275136763, guid: 62becb4945b2547679bbb1540069db44, type: 3}
+    - {fileID: 7563342499709789206, guid: 62becb4945b2547679bbb1540069db44, type: 3}
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 62becb4945b2547679bbb1540069db44, type: 3}
