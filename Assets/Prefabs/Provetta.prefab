@@ -341,7 +341,7 @@ MonoBehaviour:
   pourPoint: {fileID: 5849946253092117171}
   pourAngle: 60
   pourRate: 50
-  searchRadius: 0.25
+  searchRadius: 0.05
   receiverMask:
     serializedVersion: 2
     m_Bits: 4294967295

@@ -367,8 +367,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9e245c14d219f45dbb872239e0d92b43, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  capacityMl: 250
-  startMl: 100
+  capacityMl: 100
+  startMl: 0
   shaderFillProperty: _Fill
   liquidRenderer: {fileID: 6986524850326544988}
 --- !u!114 &802084309827003229

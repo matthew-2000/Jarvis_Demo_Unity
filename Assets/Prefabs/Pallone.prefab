@@ -25,7 +25,7 @@ Transform:
   m_GameObject: {fileID: 445656766463051687}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.223, z: 0}
+  m_LocalPosition: {x: 0, y: 0.2452, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -446,8 +446,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 0.14201759, y: 0.26135373, z: 0.14201766}
-  m_Center: {x: 0, y: 0.12720299, z: 0}
+  m_Size: {x: 0.09096774, y: 0.23408955, z: 0.09028874}
+  m_Center: {x: 0.00039973482, y: 0.1135709, z: 0.000000007450581}
 --- !u!114 &9135637408360933904
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -461,7 +461,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   capacityMl: 250
-  startMl: 100
+  startMl: 0
   shaderFillProperty: _Fill
   liquidRenderer: {fileID: 3001025699298894907}
 --- !u!114 &4446785914454347817
