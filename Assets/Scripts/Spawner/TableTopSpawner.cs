@@ -67,7 +67,7 @@ public class TableTopSpawner : AnchorPrefabSpawner
                 if (scale >= minScale)
                 {
                     // Posiziona il prefab perfettamente al centro della superficie, 5cm più in alto
-                    var localPos = new Vector3(center.x, center.y, center.z + 0.05f);
+                    var localPos = new Vector3(center.x, center.y, center.z + 0.02f);
 
                     var go = Instantiate(p,
                         anchor.transform.TransformPoint(localPos),
