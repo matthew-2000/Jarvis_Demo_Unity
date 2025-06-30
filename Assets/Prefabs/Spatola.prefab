@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 6132372142618662282}
   m_Layer: 0
   m_Name: Spatola
-  m_TagString: Untagged
+  m_TagString: Spatola
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -73,10 +73,12 @@ GameObject:
   - component: {fileID: 8782040382998986573}
   - component: {fileID: 3987938602545968109}
   - component: {fileID: 6291841520320868726}
-  - component: {fileID: 495403039928075226}
+  - component: {fileID: 6001734404178290764}
+  - component: {fileID: 1771424029645470239}
+  - component: {fileID: 2727231451477086499}
   m_Layer: 0
   m_Name: Testa
-  m_TagString: Untagged
+  m_TagString: Spatola
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -93,7 +95,8 @@ Transform:
   m_LocalPosition: {x: -0.11, y: 0, z: 0}
   m_LocalScale: {x: 0.08, y: 0.003, z: 0.05}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 575027985001826387}
   m_Father: {fileID: 5503788410579705527}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!33 &3987938602545968109
@@ -149,7 +152,34 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!65 &495403039928075226
+--- !u!54 &6001734404178290764
+Rigidbody:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5116364336045218933}
+  serializedVersion: 4
+  m_Mass: 1
+  m_Drag: 0
+  m_AngularDrag: 0.05
+  m_CenterOfMass: {x: 0, y: 0, z: 0}
+  m_InertiaTensor: {x: 1, y: 1, z: 1}
+  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ImplicitCom: 1
+  m_ImplicitTensor: 1
+  m_UseGravity: 0
+  m_IsKinematic: 1
+  m_Interpolate: 0
+  m_Constraints: 0
+  m_CollisionDetection: 0
+--- !u!65 &1771424029645470239
 BoxCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -164,12 +194,57 @@ BoxCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 1, y: 1, z: 1}
+  m_Size: {x: 1, y: 0.99999994, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &2727231451477086499
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5116364336045218933}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 913fcbe17e51c4d13a02be7447849136, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  polverePrefab: {fileID: 7144171881585382284, guid: 6c4373b3e671b4b7bbffb7dd55b1ea6e, type: 3}
+  puntoPolvere: {fileID: 575027985001826387}
+--- !u!1 &5211965153076350660
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 575027985001826387}
+  m_Layer: 0
+  m_Name: PuntoPolvere
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &575027985001826387
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5211965153076350660}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 2.92, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 8782040382998986573}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &5799641637390871945
 GameObject:
   m_ObjectHideFlags: 0
@@ -181,7 +256,7 @@ GameObject:
   - component: {fileID: 7267476712557100932}
   - component: {fileID: 726945619894851294}
   - component: {fileID: 3036200299759523145}
-  - component: {fileID: 3583152934212253524}
+  - component: {fileID: 6892159240966811301}
   m_Layer: 0
   m_Name: Manico
   m_TagString: Untagged
@@ -257,8 +332,8 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!136 &3583152934212253524
-CapsuleCollider:
+--- !u!65 &6892159240966811301
+BoxCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -275,11 +350,9 @@ CapsuleCollider:
   m_IsTrigger: 0
   m_ProvidesContacts: 0
   m_Enabled: 1
-  serializedVersion: 2
-  m_Radius: 0.5000001
-  m_Height: 2
-  m_Direction: 1
-  m_Center: {x: 0.000000059604645, y: 0, z: -0.00000008940697}
+  serializedVersion: 3
+  m_Size: {x: 1.0000004, y: 2.0000005, z: 1.0000002}
+  m_Center: {x: 0.00000005960466, y: -1.2440794e-23, z: -0.00000008940697}
 --- !u!1 &8711455373168725034
 GameObject:
   m_ObjectHideFlags: 0

@@ -72,6 +72,7 @@ Transform:
   - {fileID: 5949338602248575773}
   - {fileID: 3356470473646809540}
   - {fileID: 4702671986703153734}
+  - {fileID: 5617763959890581867}
   - {fileID: 8693531919408422115}
   - {fileID: 6535347975408647954}
   - {fileID: 2903609048362038028}
@@ -83,7 +84,6 @@ Transform:
   - {fileID: 268711610281809152}
   - {fileID: 8148449224528731310}
   - {fileID: 8354907182921818788}
-  - {fileID: 5617763959890581867}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &5538919204212931667
@@ -108,6 +108,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 6112636333828348674}
     m_Modifications:
+    - target: {fileID: 2084695012560254390, guid: d2f0ff5e1570542b08e5e655b95993c6, type: 3}
+      propertyPath: testoMg
+      value: 
+      objectReference: {fileID: 7707200135760567493}
     - target: {fileID: 4875899782630709731, guid: d2f0ff5e1570542b08e5e655b95993c6, type: 3}
       propertyPath: m_Name
       value: Cartina
@@ -591,6 +595,17 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 234954065330801088, guid: 0a7eeb762a8ea4347b55ef6a3949f708, type: 3}
   m_PrefabInstance: {fileID: 3302877295154145284}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &7707200135760567493 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5126034082912040129, guid: 0a7eeb762a8ea4347b55ef6a3949f708, type: 3}
+  m_PrefabInstance: {fileID: 3302877295154145284}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &3319126188480826526
 PrefabInstance:
   m_ObjectHideFlags: 0
