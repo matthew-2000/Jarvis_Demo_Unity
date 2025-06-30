@@ -44,6 +44,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6112636333828348674}
+  - component: {fileID: 5538919204212931667}
   m_Layer: 0
   m_Name: Tavolo da Lavoro
   m_TagString: Untagged
@@ -85,6 +86,20 @@ Transform:
   - {fileID: 5617763959890581867}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &5538919204212931667
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6270939209452363204}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7a62d41bcb8cf47659b59be35237fc18, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  flaskId: SnapInteractionPallone
+  supportId: SupportoSnap
 --- !u!1001 &387319400648295134
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1100,6 +1115,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 6112636333828348674}
     m_Modifications:
+    - target: {fileID: 5273578883540031153, guid: 2e4c84765ae4e4e4e865ecef92c564da, type: 3}
+      propertyPath: m_Name
+      value: SupportoSnap
+      objectReference: {fileID: 0}
     - target: {fileID: 8289964988332790751, guid: 2e4c84765ae4e4e4e865ecef92c564da, type: 3}
       propertyPath: m_LocalPosition.x
       value: -0.7
@@ -1144,11 +1163,45 @@ PrefabInstance:
       propertyPath: m_Name
       value: Supporto
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 6948385557749446460, guid: 2e4c84765ae4e4e4e865ecef92c564da, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 5273578883540031153, guid: 2e4c84765ae4e4e4e865ecef92c564da, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 5220743208867905835}
   m_SourcePrefab: {fileID: 100100000, guid: 2e4c84765ae4e4e4e865ecef92c564da, type: 3}
+--- !u!1 &1328537951744652898 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 5273578883540031153, guid: 2e4c84765ae4e4e4e865ecef92c564da, type: 3}
+  m_PrefabInstance: {fileID: 6575376641621156051}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &5220743208867905835
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1328537951744652898}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0827fc66df29248cfaedc2d938a0877b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _interactorFilters: []
+  _maxInteractors: -1
+  _maxSelectingInteractors: -1
+  _data: {fileID: 0}
+  _rigidbody: {fileID: 2040277256620227455}
+  _snapPoseDelegate: {fileID: 0}
+  _movementProvider: {fileID: 0}
+  flaskId: SnapInteractionPallone
+--- !u!54 &2040277256620227455 stripped
+Rigidbody:
+  m_CorrespondingSourceObject: {fileID: 5120851631181847468, guid: 2e4c84765ae4e4e4e865ecef92c564da, type: 3}
+  m_PrefabInstance: {fileID: 6575376641621156051}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &2903609048362038028 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 8289964988332790751, guid: 2e4c84765ae4e4e4e865ecef92c564da, type: 3}

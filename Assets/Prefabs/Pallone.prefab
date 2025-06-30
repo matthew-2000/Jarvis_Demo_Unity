@@ -42,7 +42,7 @@ GameObject:
   - component: {fileID: 4302556860995657030}
   - component: {fileID: 2619269659078744842}
   m_Layer: 0
-  m_Name: SnapInteraction
+  m_Name: SnapInteractionPallone
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
