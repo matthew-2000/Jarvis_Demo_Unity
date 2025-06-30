@@ -11,7 +11,7 @@ public class CartinaTarget : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        Debug.Log($"OnTriggerEnter chiamato da: {other.gameObject.name}");
+        // Debug.Log($"OnTriggerEnter chiamato da: {other.gameObject.name}");
 
         if (other.CompareTag("Spatola"))
         {

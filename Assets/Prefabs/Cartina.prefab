@@ -259,59 +259,6 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
---- !u!1 &2651879491690599227
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 8597619640458728215}
-  - component: {fileID: 3711779452111048971}
-  m_Layer: 0
-  m_Name: PolvereCollider
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &8597619640458728215
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2651879491690599227}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.0385, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 5230445532656655285}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!65 &3711779452111048971
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2651879491690599227}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 1
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 0.05, y: 0.05, z: 0.1}
-  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &4875899782630709731
 GameObject:
   m_ObjectHideFlags: 0
@@ -323,6 +270,7 @@ GameObject:
   - component: {fileID: 5230445532656655285}
   - component: {fileID: 7048989785885721476}
   - component: {fileID: 2084695012560254390}
+  - component: {fileID: 7814676913797625587}
   m_Layer: 0
   m_Name: Cartina
   m_TagString: Untagged
@@ -348,7 +296,6 @@ Transform:
   - {fileID: 1754308844976308647}
   - {fileID: 4278212820492756783}
   - {fileID: 3780751504473548282}
-  - {fileID: 8597619640458728215}
   - {fileID: 8700201061082474399}
   - {fileID: 4249533258332013973}
   - {fileID: 6137354106749441429}
@@ -395,7 +342,28 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6fa3d06d5fa3a42f881948db6721b422, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  puntoDeposito: {fileID: 5230445532656655285}
+  testoMg: {fileID: 0}
+--- !u!65 &7814676913797625587
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4875899782630709731}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.05, y: 0.05, z: 0.17}
+  m_Center: {x: 0, y: 0.03, z: 0}
 --- !u!1 &5952780558775842868
 GameObject:
   m_ObjectHideFlags: 0
