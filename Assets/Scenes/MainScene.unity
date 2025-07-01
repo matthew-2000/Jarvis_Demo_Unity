@@ -10221,16 +10221,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   noneState:
     speed: 0
-    noise: 0
-    color: {r: 1, g: 1, b: 1, a: 1}
+    noise: 0.05
+    color: {r: 1, g: 0.7969552, b: 0.6933962, a: 1}
   listeningState:
     speed: 0.01
-    noise: 0.1
-    color: {r: 0.2, g: 0.9, b: 1, a: 1}
+    noise: 0.15
+    color: {r: 1, g: 0.70238626, b: 0.18396229, a: 1}
   speakingState:
     speed: 0.02
-    noise: 0.4
-    color: {r: 1, g: 0.55, b: 0.2, a: 1}
+    noise: 0.3
+    color: {r: 1, g: 0.54637444, b: 0.15566039, a: 1}
   joyPreset:
     color: {r: 1, g: 0.86, b: 0.25, a: 1}
     speed: 0.02
@@ -12409,8 +12409,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 02adf93660a7d4fe3a8b5e58d46daad6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  baseUrl: http://192.168.1.13:5001
+  baseUrl: http://172.20.10.2:5001
   userID: unity_client1
+  sessionContext: "[CONTEXT] Stiamo iniziando un\u2019esercitazione di realt\xE0
+    mista sulla sintesi chimica del 2,4,6-trinitro-resorcinolo. L\u2019utente indossa
+    Meta Quest 3 e usa voce + gesture per manipolare pallone, becher, cilindro graduato,
+    piastra HP e reagenti virtuali. Il tuo compito \xE8 guidarlo mentre esegue, in
+    sequenza: posizionare il pallone sul supporto; pesare 500 mg di resorcinolo;
+    trasferire la polvere; misurare 50 mL di etanolo; aggiungere il solvente; accendere
+    la piastra a 60 \xB0C; versare acido solforico in B2; aggiungere lentamente acido
+    nitrico; versare la miscela nitrante nel pallone; osservare il cambio di colore
+    finale. [END CONTEXT]"
   OnTextResponseReceived:
     m_PersistentCalls:
       m_Calls: []
@@ -13067,7 +13076,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   userHead: {fileID: 1220610141}
   forwardDistance: 0.5
-  heightOffset: -0.2
+  heightOffset: 0
   moveDuration: 0.8
   faceUser: 1
   yawOffset: 180
@@ -19626,7 +19635,7 @@ MonoBehaviour:
   PrependedText: 
   AppendedText: 
   _ttsService: {fileID: 468789197}
-  presetVoiceID: WIT$COOPER
+  presetVoiceID: WIT$CAM
   customWitVoiceSettings:
     SettingsId: 
     PrependedText: 

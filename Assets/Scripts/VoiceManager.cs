@@ -66,7 +66,7 @@ public class VoiceManager : MonoBehaviour
     };
 
     private static readonly string[] RESET_CONVERSATION = {
-        "resetta", "resetta conversazione", "ricomincia", 
+        "resetta", "resetta conversazione", "resetta la conversazione", "ricomincia", 
         "nuova conversazione", "cancella tutto", "azzera"
     };
 

@@ -44,11 +44,15 @@ public class PourDetector : MonoBehaviour
             }
         }
 
-        if (target == null) return;           // nessun “vero bicchiere” sotto ⇒ non prelevo
+        if (target == null) return;
 
-        // 3. trasferisci il volume
+        /* 3) Trasferisci volume + colore -------------------------------- */
         float delta = Mathf.Min(pourRate * Time.deltaTime, source.CurrentMl);
-        source.Remove(delta);
-        target.Add(delta);
+
+        // 3.a preleva dal source
+        LiquidPortion portion = source.Draw(delta);
+
+        // 3.b versa nel target
+        target.PourIn(portion);
     }
 }

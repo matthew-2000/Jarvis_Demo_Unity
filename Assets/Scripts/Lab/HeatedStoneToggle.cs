@@ -29,4 +29,6 @@ public class HeatedStoneToggle : MonoBehaviour
             targetRenderer.material.color = color;
         }
     }
+
+    public bool IsOn => isOn;  // Proprieta' per verificare lo stato della pietra
 }
