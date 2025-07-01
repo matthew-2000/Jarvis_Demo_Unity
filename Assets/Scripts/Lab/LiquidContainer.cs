@@ -1,163 +1,190 @@
 using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+
+public enum LiquidType { None, Etanolo, MiscelaNitrante, ProdottoFinale }
 
 public struct LiquidPortion
 {
-    public float  volume;      // ml
-    public Color  topColor;    // colore parte alta (riflessi)
-    public Color  sideColor;   // colore laterale / bulk
+    public float volume;
+    public Color topColor;
+    public Color sideColor;
+    public LiquidType type;
 
-    public LiquidPortion(float v, Color top, Color side)
+    public LiquidPortion(float v, Color top, Color side, LiquidType t)
     {
         volume    = v;
         topColor  = top;
         sideColor = side;
+        type      = t;
     }
 }
 
-[RequireComponent(typeof(MeshRenderer))]
+[RequireComponent(typeof(Renderer))]
 public class LiquidContainer : MonoBehaviour
 {
+    /* ----------------- INSPECTOR ----------------- */
     [Header("Setup")]
-    [SerializeField] float  capacityMl          = 250f;
-    [SerializeField] float  startMl             = 0f;
-    [SerializeField] Color  startTopColor       = Color.clear;          // etanolo → quasi trasparente
-    [SerializeField] Color  startSideColor      = Color.clear;
-    [SerializeField] string shaderFillProperty  = "_Fill";
-    [SerializeField] string shaderTopProperty   = "_TopColor";
-    [SerializeField] string shaderSideProperty  = "_SideColor";
-    [SerializeField] Renderer liquidRenderer;                           
+    [SerializeField] float       capacityMl      = 250f;
+    [SerializeField] float       startMl         = 0f;
+    [SerializeField] LiquidType  startType       = LiquidType.None;
+    [SerializeField] Color       startTopColor   = Color.clear;
+    [SerializeField] Color       startSideColor  = Color.clear;
+    [SerializeField] string      shaderFillProp  = "_Fill";
+    [SerializeField] string      shaderTopProp   = "_TopColor";
+    [SerializeField] string      shaderSideProp  = "_SideColor";
+    [SerializeField] Renderer    liquidRenderer;
 
-    /// Stato corrente
+    /* ----------------- STATO ----------------- */
     float currentMl;
     Color currentTopColor;
     Color currentSideColor;
 
+    readonly Dictionary<LiquidType,float> composition = new();
+    public  float CurrentMl                       => currentMl;
+    public  float CapacityMl                      => capacityMl;
+    public  IReadOnlyDictionary<LiquidType,float> Composition => composition;
+
+    public event System.Action OnContentChanged;
+
     MaterialPropertyBlock mpb;
+    Coroutine transitionRoutine;
 
-    #region API pubblica
-    public float CurrentMl      => currentMl;
-    public float Capacity       => capacityMl;
-    public Color CurrentTopCol  => currentTopColor;
-    public Color CurrentSideCol => currentSideColor;
+    /* ============== API PUBBLICA ============== */
 
-    /// Rimuove fino a "ml" e restituisce la parte prelevata (volume/colori)
-    public LiquidPortion Draw(float ml)
+    public void Add(LiquidType type, float ml, Color topCol, Color sideCol)
     {
-        float delta = Mathf.Clamp(ml, 0f, currentMl);
-        currentMl  -= delta;
+        if (ml <= 0f) return;
 
-        // restituiamo il liquido con lo stesso colore del bulk
-        LiquidPortion portion = new LiquidPortion(delta, currentTopColor, currentSideColor); 
-        UpdateShader();
-        return portion;
-    }
+        float spazio  = capacityMl - currentMl;
+        float versato = Mathf.Min(spazio, ml);
+        if (versato <= 0f) return;
 
-    /// Aggiunge liquido; se il container era vuoto prende direttamente i colori del versato,
-    /// altrimenti fa una media pesata (mix)
-    public void PourIn(LiquidPortion p)
-    {
-        if (p.volume <= 0f) return;
-
-        float newVol = Mathf.Min(currentMl + p.volume, capacityMl);
-        float incoming = newVol - currentMl;          // nel caso di overflow scartiamo l'eccedenza
-
-        // *** MIX COLORE  = media pesata ***
-        if (currentMl <= 0.0001f)            // recipiente inizialmente vuoto
+        // ********** miscela colori (media pesata) **********
+        float newVol = currentMl + versato;
+        if (currentMl < 0.001f)
         {
-            currentTopColor  = p.topColor;
-            currentSideColor = p.sideColor;
+            currentTopColor  = topCol;
+            currentSideColor = sideCol;
         }
         else
         {
             float wOld = currentMl / newVol;
-            float wNew = incoming   / newVol;
-
-            currentTopColor  = currentTopColor  * wOld + p.topColor  * wNew;
-            currentSideColor = currentSideColor * wOld + p.sideColor * wNew;
+            float wNew = versato   / newVol;
+            currentTopColor  = currentTopColor  * wOld + topCol  * wNew;
+            currentSideColor = currentSideColor * wOld + sideCol * wNew;
         }
 
         currentMl = newVol;
-        UpdateShader();
-    }
-    #endregion
 
-    public void TransitionToColor(Color targetTop,
-                               Color targetSide,
-                               float duration = 3f,
-                               AnimationCurve curve = null)
+        // aggiorna dizionario
+        if (!composition.ContainsKey(type))
+            composition[type] = 0f;
+        composition[type] += versato;
+
+        UpdateShader();
+        OnContentChanged?.Invoke();
+    }
+
+    public LiquidPortion Draw(float ml)
+    {
+        float estratto = Mathf.Clamp(ml, 0, currentMl);
+        currentMl    -= estratto;
+
+        // tipo predominante (semplicissimo: quello col volume maggiore)
+        LiquidType dominante = LiquidType.None;
+        float maxVol = 0f;
+        foreach (var kv in composition)
+        {
+            if (kv.Value > maxVol) { dominante = kv.Key; maxVol = kv.Value; }
+        }
+
+        if (dominante != LiquidType.None)
+        {
+            composition[dominante] -= estratto;
+            if (composition[dominante] <= 0.001f)
+                composition.Remove(dominante);
+        }
+
+        UpdateShader();
+        OnContentChanged?.Invoke();
+
+        return new LiquidPortion(estratto, currentTopColor, currentSideColor, dominante);
+    }
+
+    public void TransitionToColor(Color tgtTop, Color tgtSide, float dur = 3f,
+                                  AnimationCurve curve = null)
     {
         if (transitionRoutine != null) StopCoroutine(transitionRoutine);
-        transitionRoutine = StartCoroutine(LerpColorsRoutine(
+        transitionRoutine = StartCoroutine(LerpRoutine(
             currentTopColor, currentSideColor,
-            targetTop,       targetSide,
-            duration,
+            tgtTop,          tgtSide,
+            dur,
             curve ?? AnimationCurve.Linear(0,0,1,1)
         ));
     }
 
-    Coroutine transitionRoutine;   // campo privato
+    /* ============== UNITY ============== */
 
-    IEnumerator LerpColorsRoutine(Color startTop, Color startSide,
-                                Color endTop,   Color endSide,
-                                float duration, AnimationCurve curve)
+    void Awake()
     {
-        float t = 0f;
-        while (t < duration)
-        {
-            float k = curve.Evaluate(t / duration);   // 0→1 secondo curva
+        if (!liquidRenderer) liquidRenderer = GetComponent<Renderer>();
+        mpb = new MaterialPropertyBlock();
 
-            currentTopColor  = Color.Lerp(startTop,  endTop,  k);
-            currentSideColor = Color.Lerp(startSide, endSide, k);
-
-            UpdateShader();           // già presente nello script
-            t += Time.deltaTime;
-            yield return null;
-        }
-
-        // assicura valori finali precisi
-        currentTopColor  = endTop;
-        currentSideColor = endSide;
+        InitState();          // inizializza volumi + dizionario
         UpdateShader();
     }
 
-
-    #region Interno
-    void Awake()
+    void InitState()
     {
-        if (!liquidRenderer) liquidRenderer = GetComponentInChildren<Renderer>();
-        mpb = new MaterialPropertyBlock();
-
         currentMl        = Mathf.Clamp(startMl, 0, capacityMl);
         currentTopColor  = startTopColor;
         currentSideColor = startSideColor;
 
-        UpdateShader();
+        composition.Clear();
+        if (currentMl > 0.001f && startType != LiquidType.None)
+            composition[startType] = currentMl;
     }
 
     void UpdateShader()
     {
-        // 1) livello di riempimento (world-units)
-        float height = liquidRenderer.bounds.size.y;
+        float height    = liquidRenderer.bounds.size.y;             // world-space
         float fillWorld = (currentMl / capacityMl) * height;
 
-        // 2) scrivi blocco
         liquidRenderer.GetPropertyBlock(mpb);
-        mpb.SetFloat(shaderFillProperty,  fillWorld);
-        mpb.SetColor(shaderTopProperty,   currentTopColor);
-        mpb.SetColor(shaderSideProperty,  currentSideColor);
+        mpb.SetFloat(shaderFillProp, fillWorld);
+        mpb.SetColor(shaderTopProp,  currentTopColor);
+        mpb.SetColor(shaderSideProp, currentSideColor);
         liquidRenderer.SetPropertyBlock(mpb);
     }
+
+    IEnumerator LerpRoutine(Color sTop, Color sSide,
+                             Color eTop, Color eSide,
+                             float d, AnimationCurve c)
+    {
+        float t = 0f;
+        while (t < d)
+        {
+            float k = c.Evaluate(t / d);
+            currentTopColor  = Color.Lerp(sTop,  eTop,  k);
+            currentSideColor = Color.Lerp(sSide, eSide, k);
+            UpdateShader();
+            t += Time.deltaTime;
+            yield return null;
+        }
+        currentTopColor  = eTop;
+        currentSideColor = eSide;
+        UpdateShader();
+    }
+
 #if UNITY_EDITOR
     void OnValidate()
     {
-        if (!liquidRenderer) liquidRenderer = GetComponentInChildren<Renderer>();
-        if (mpb == null)     mpb = new MaterialPropertyBlock();
-        currentMl = Mathf.Clamp(startMl, 0, capacityMl);
-        currentTopColor  = startTopColor;
-        currentSideColor = startSideColor;
+        if (!liquidRenderer) liquidRenderer = GetComponent<Renderer>();
+        if (mpb == null) mpb = new MaterialPropertyBlock();
+        InitState();
         UpdateShader();
     }
 #endif
-    #endregion
 }

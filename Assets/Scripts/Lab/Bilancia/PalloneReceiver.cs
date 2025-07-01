@@ -6,7 +6,7 @@ public class PalloneReceiver : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        Debug.Log($"Pallone ha toccato: {other.gameObject.name}");
+        // Debug.Log($"Pallone ha toccato: {other.gameObject.name}");
         if (other.gameObject == cartina)
         {
             Debug.Log("Pallone ha toccato la cartina. Trasferimento polvere...");

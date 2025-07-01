@@ -1,14 +1,18 @@
 using UnityEngine;
+using System;
 
 public class HeatedStoneToggle : MonoBehaviour
 {
-    [SerializeField] private Color offColor = Color.gray;       // Colore "spento"
-    [SerializeField] private Color onColor = Color.red;         // Colore "acceso" (es. rosso incandescente)
-    [SerializeField] private Renderer targetRenderer;
+    [SerializeField] Color     offColor     = Color.gray;      // colore spento
+    [SerializeField] Color     onColor      = Color.red;       // colore acceso
+    [SerializeField] Renderer  targetRenderer;
 
-    private bool isOn = false;
+    bool isOn = false;
+    public  bool IsOn => isOn;
 
-    private void Start()
+    public event Action<bool> OnPlateStateChanged;             // <true>=acceso, <false>=spento
+
+    void Start()
     {
         if (targetRenderer == null)
             targetRenderer = GetComponent<Renderer>();
@@ -16,19 +20,18 @@ public class HeatedStoneToggle : MonoBehaviour
         SetStoneColor(offColor);
     }
 
-    public void ToggleStoneState()
+    public void ToggleStoneState() => SetState(!isOn);
+
+    public void SetState(bool on)
     {
-        isOn = !isOn;
+        isOn = on;
         SetStoneColor(isOn ? onColor : offColor);
+        OnPlateStateChanged?.Invoke(isOn);
     }
 
-    private void SetStoneColor(Color color)
+    void SetStoneColor(Color c)
     {
         if (targetRenderer != null)
-        {
-            targetRenderer.material.color = color;
-        }
+            targetRenderer.material.color = c;
     }
-
-    public bool IsOn => isOn;  // Proprieta' per verificare lo stato della pietra
 }
